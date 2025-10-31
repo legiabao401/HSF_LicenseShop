@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý yêu cầu rút tiền - License Shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            color: #333;
+            z-index: 1000;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            border-right: 1px solid rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-header .navbar-brand {
+            color: #ff7b00;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        
+        .sidebar-header .navbar-brand:hover {
+            color: #e66a00;
+        }
+        
+        .menu-section {
+            padding: 20px 0;
+        }
+        
+        .section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 20px 10px;
+            margin-bottom: 10px;
+        }
+        
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #ff7b00;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            margin: 2px 0;
+            font-weight: 500;
+        }
+        
+        .menu-item:hover {
+            background-color: rgba(255, 123, 0, 0.1);
+            color: #e66a00;
+            border-left-color: #ff7b00;
+            transform: translateX(5px);
+        }
+        
+        .menu-item.active {
+            background-color: rgba(255, 123, 0, 0.15);
+            color: #e66a00;
+            border-left-color: #ff7b00;
+            font-weight: 600;
+        }
+        
+        .menu-item i {
+            width: 20px;
+            margin-right: 12px;
+            font-size: 16px;
+        }
+        
+        .main-content {
+            margin-left: 280px;
+            padding: 0;
+            min-height: 100vh;
+        }
+        
+        .top-navbar {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .content-area {
+            padding: 30px;
+        }
+        
+        .page-header {
+            background: white;
+            border-radius: 12px;
+            padding: 18px 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .page-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0;
+        }
+        
+        .admin-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+        
+        .admin-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        
+        .status-filter-btn {
+            transition: all 0.3s ease;
+        }
+        
+        .status-filter-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        
+        .status-filter-btn.active {
+            border: 2px solid #ff7b00;
+            background: linear-gradient(135deg, rgba(255, 123, 0, 0.1), rgba(255, 123, 0, 0.05));
+        }
+        
+        .request-item {
+            border-left: 4px solid #ff7b00;
+            transition: all 0.3s ease;
+        }
+        
+        .request-item:hover {
+            background-color: #f8f9fa;
+            transform: translateX(5px);
+        }
+        
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .btn-approve {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-approve:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
+            color: white;
+        }
+        
+        .btn-reject {
+            background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-reject:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
+            color: white;
+        }
+        
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="d-flex align-items-center justify-content-between">
+                <a class="navbar-brand d-flex align-items-center" th:href="@{/admin}" href="/admin">
+                    <i class="fa-solid fa-shield-halved me-2" style="color:#ff7b00;"></i>
+                    License Shop Admin
+                </a>
+            </div>
+        </div>
+        
+        <div class="menu-section">
+            <div class="section-title">ADMIN</div>
+            <a href="/admin" class="menu-item">
+                <i class="fas fa-tachometer-alt"></i>
+                Dashboard
+            </a>
+        </div>
+        
+        <div class="menu-section">
+            <div class="section-title">SELLER</div>
+            <a href="/seller/gross-sales" class="menu-item">
+                <i class="fas fa-shopping-cart"></i>
+                Doanh số
+            </a>
+            <a href="/seller/stall-management" class="menu-item">
+                <i class="fas fa-clipboard-list"></i>
+                Quản lý gian hàng
+            </a>
+            <a href="/seller/orders" class="menu-item">
+                <i class="fas fa-file-invoice-dollar"></i>
+                Đơn hàng sản phẩm
+            </a>
+            <a href="/seller/reviews" class="menu-item">
+                <i class="fas fa-comment"></i>
+                Đánh giá
+            </a>
+            <a href="/withdraw" class="menu-item">
+                <i class="fas fa-money-bill-transfer"></i>
+                Rút tiền
+            </a>
+        </div>
+        
+        <div class="menu-section">
+            <div class="section-title">QUẢN LÝ</div>
+            <a href="/admin/users" class="menu-item">
+                <i class="fas fa-users"></i>
+                Quản lý người dùng
+            </a>
+            <a href="/admin/stalls" class="menu-item">
+                <i class="fas fa-store"></i>
+                Quản lý cửa hàng
+            </a>
+            <a href="/admin/withdraw-requests" class="menu-item">
+                <i class="fas fa-money-bill-transfer"></i>
+                Yêu cầu rút tiền
+            </a>
+            <a href="/admin/audit-logs" class="menu-item">
+                <i class="fas fa-clipboard-list"></i>
+                Audit Logs
+            </a>
+            <a href="/admin/api-logs" class="menu-item">
+                <i class="fas fa-code"></i>
+                API Logs
+            </a>
+            <a href="/admin/user-activity-logs" class="menu-item">
+                <i class="fas fa-user-clock"></i>
+                User Activity Logs
+            </a>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navbar -->
+        <div class="top-navbar">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-outline-secondary me-3" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <!-- Profile Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" style="border-color:#ff7b00;color:#ff7b00;">
+                        <img th:src="${user != null} ? @{/api/profile/avatar/me} : '/images/default-avatar.svg'" 
+                             class="rounded-circle" 
+                             style="width: 24px; height: 24px; object-fit: cover;"
+                             alt="Avatar">
+                        <span th:text="${username}">Admin</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" th:href="@{/profile}" href="/profile"><i class="fa-solid fa-user me-2"></i>Thông tin cá nhân</a></li>
+                        <li><a class="dropdown-item" th:href="@{/change-password}" href="/change-password"><i class="fa-solid fa-key me-2"></i>Đổi mật khẩu</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" th:href="@{/logout}" href="/logout"><i class="fa-solid fa-right-from-bracket me-2"></i>Đăng xuất</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Content Area -->
+        <div class="content-area">
+
+    <main class="container py-4 py-md-5">
+        <div class="row">
+            <div class="col-12">
+                <div class="page-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="page-title">Quản lý yêu cầu rút tiền</h1>
+                            <small class="text-muted">Duyệt và từ chối các yêu cầu rút tiền từ người dùng</small>
+                        </div>
+                        <button class="btn btn-outline-primary" onclick="loadPendingRequests()" style="border-color:#ff7b00;color:#ff7b00;">
+                            <i class="fa-solid fa-arrow-rotate-right me-2" style="color:#ff7b00;"></i>Làm mới
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Filter Buttons -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card admin-card status-filter-btn" data-status="PENDING" style="cursor: pointer;">
+                    <div class="card-body text-center">
+                        <i class="fa-solid fa-clock fa-2x text-warning mb-3"></i>
+                        <h4 class="text-warning" id="pendingCount">0</h4>
+                        <p class="mb-0">Đang chờ duyệt</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card admin-card status-filter-btn" data-status="APPROVED" style="cursor: pointer;">
+                    <div class="card-body text-center">
+                        <i class="fa-solid fa-check-circle fa-2x text-success mb-3"></i>
+                        <h4 class="text-success" id="approvedCount">0</h4>
+                        <p class="mb-0">Đã duyệt</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card admin-card status-filter-btn" data-status="REJECTED" style="cursor: pointer;">
+                    <div class="card-body text-center">
+                        <i class="fa-solid fa-times-circle fa-2x text-danger mb-3"></i>
+                        <h4 class="text-danger" id="rejectedCount">0</h4>
+                        <p class="mb-0">Đã từ chối</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card admin-card status-filter-btn" data-status="CANCELLED" style="cursor: pointer;">
+                    <div class="card-body text-center">
+                        <i class="fa-solid fa-ban fa-2x text-secondary mb-3"></i>
+                        <h4 class="text-secondary" id="cancelledCount">0</h4>
+                        <p class="mb-0">Đã hủy</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card admin-card">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="fa-solid fa-filter me-2"></i>Bộ lọc và tìm kiếm</h6>
+                    </div>
+                    <div class="card-body">
+                        <form id="filterForm">
+                            <div class="row g-3">
+                                <!-- Date Range Filters -->
+                                <div class="col-md-3">
+                                    <label for="dateFrom" class="form-label">Từ ngày</label>
+                                    <input type="date" class="form-control" id="dateFrom" name="dateFrom">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="dateTo" class="form-label">Đến ngày</label>
+                                    <input type="date" class="form-control" id="dateTo" name="dateTo">
+                                </div>
+                                
+                                <!-- Search Fields -->
+                                <div class="col-md-3">
+                                    <label for="searchName" class="form-label">Tìm theo tên</label>
+                                    <input type="text" class="form-control" id="searchName" name="searchName" placeholder="Nhập tên người dùng...">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="searchAccount" class="form-label">Số tài khoản</label>
+                                    <input type="text" class="form-control" id="searchAccount" name="searchAccount" placeholder="Nhập số tài khoản...">
+                                </div>
+                                
+                                <!-- Bank Search -->
+                                <div class="col-md-4">
+                                    <label for="searchBank" class="form-label">Ngân hàng</label>
+                                    <input type="text" class="form-control" id="searchBank" name="searchBank" placeholder="Nhập tên ngân hàng...">
+                                </div>
+                                
+                                <!-- Action Buttons -->
+                                <div class="col-md-8 d-flex align-items-end gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="applyFilters()">
+                                        <i class="fa-solid fa-filter me-1"></i>Lọc
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                                        <i class="fa-solid fa-eraser me-1"></i>Xóa bộ lọc
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Withdraw Requests -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card admin-card">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="fa-solid fa-list me-2"></i><span id="requestsTitle">Yêu cầu đang chờ duyệt</span></h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="pendingRequests">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Đang tải...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalLabel">Xác nhận hành động</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="confirmMessage">Bạn có chắc chắn muốn thực hiện hành động này?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" id="confirmAction">Xác nhận</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="border-top py-3 mt-5">
+        <div class="container d-flex justify-content-between align-items-center small">
+            <div>© <span th:text="${#dates.format(#dates.createNow(),'yyyy')}">2025</span> License Shop - Admin Panel</div>
+            <div class="text-muted">Liên hệ: admin@example.com</div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        let currentAction = null;
+        let currentRequestId = null;
+        
+        let currentStatus = 'PENDING';
+        let currentFilters = {
+            dateFrom: '',
+            dateTo: '',
+            searchName: '',
+            searchAccount: '',
+            searchBank: ''
+        };
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sidebar toggle functionality
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                    
+                    // Update main content margin
+                    if (sidebar.classList.contains('collapsed')) {
+                        mainContent.style.marginLeft = '0';
+                    } else {
+                        mainContent.style.marginLeft = '280px';
+                    }
+                });
+            }
+            
+            // Set active menu item based on current path
+            const currentPath = window.location.pathname;
+            const menuItems = document.querySelectorAll('.menu-item[href]');
+            
+            menuItems.forEach(function(item) {
+                const itemPath = item.getAttribute('href');
+                if (currentPath === itemPath || (itemPath !== '/admin' && currentPath.startsWith(itemPath))) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // Add click event listeners to status filter buttons
+            document.querySelectorAll('.status-filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const status = this.getAttribute('data-status');
+                    filterRequestsByStatus(status);
+                });
+            });
+            
+            // Load initial data (PENDING requests)
+            loadRequestsByStatus('PENDING');
+            updateStatistics();
+        });
+        
+        function filterRequestsByStatus(status) {
+            currentStatus = status;
+            
+            // Update active button
+            document.querySelectorAll('.status-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-status="${status}"]`).classList.add('active');
+            
+            // Update title
+            const titleMap = {
+                'PENDING': 'Yêu cầu đang chờ duyệt',
+                'APPROVED': 'Yêu cầu đã duyệt',
+                'REJECTED': 'Yêu cầu đã từ chối',
+                'CANCELLED': 'Yêu cầu đã hủy'
+            };
+            document.getElementById('requestsTitle').textContent = titleMap[status];
+            
+            // Load requests for the selected status
+            loadRequestsByStatus(status);
+        }
+        
+        async function loadRequestsByStatus(status) {
+            try {
+                // Build query parameters
+                const params = new URLSearchParams();
+                params.append('status', status);
+                
+                // Add filter parameters
+                if (currentFilters.dateFrom) params.append('dateFrom', currentFilters.dateFrom);
+                if (currentFilters.dateTo) params.append('dateTo', currentFilters.dateTo);
+                if (currentFilters.searchName) params.append('searchName', currentFilters.searchName);
+                if (currentFilters.searchAccount) params.append('searchAccount', currentFilters.searchAccount);
+                if (currentFilters.searchBank) params.append('searchBank', currentFilters.searchBank);
+                
+                const response = await fetch(`/api/admin/withdraw/requests?${params.toString()}`);
+                const requests = await response.json();
+                
+                const container = document.getElementById('pendingRequests');
+                
+                if (requests.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-5">
+                            <i class="fa-solid fa-inbox fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Không có yêu cầu nào</h5>
+                            <p class="text-muted">Không tìm thấy yêu cầu rút tiền phù hợp với bộ lọc hiện tại.</p>
+                        </div>
+                    `;
+                    updateStatistics(0, 0, 0);
+                    return;
+                }
+                
+                let html = '';
+                requests.forEach(request => {
+                    const createdAt = new Date(request.createdAt).toLocaleString('vi-VN');
+                    
+                    html += `
+                        <div class="request-item p-4 mb-3 border rounded">
+                            <div class="row align-items-center">
+                                <div class="col-md-2">
+                                    <div class="fw-bold text-primary">${formatNumber(request.amount)} VNĐ</div>
+                                    <small class="text-muted">${createdAt}</small>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="fw-bold">${request.shopName || 'N/A'}</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="fw-bold">${request.bankName}</div>
+                                    <small class="text-muted">${request.bankAccountNumber}</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="fw-bold">${request.bankAccountName}</div>
+                                    ${request.note ? `<small class="text-muted">${request.note}</small>` : ''}
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    ${status === 'PENDING' ? `
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-approve btn-sm" onclick="showConfirmModal(${request.id}, 'approve', 'Bạn có chắc chắn muốn duyệt yêu cầu rút tiền ${formatNumber(request.amount)} VNĐ?')">
+                                            <i class="fa-solid fa-check me-1"></i>Duyệt
+                                        </button>
+                                        <button class="btn btn-reject btn-sm" onclick="showConfirmModal(${request.id}, 'reject', 'Bạn có chắc chắn muốn từ chối yêu cầu rút tiền ${formatNumber(request.amount)} VNĐ?')">
+                                            <i class="fa-solid fa-times me-1"></i>Từ chối
+                                        </button>
+                                    </div>
+                                    ` : `
+                                    <span class="badge ${status === 'APPROVED' ? 'bg-success' : status === 'REJECTED' ? 'bg-danger' : 'bg-secondary'}">${status === 'APPROVED' ? 'Đã duyệt' : status === 'REJECTED' ? 'Đã từ chối' : 'Đã hủy'}</span>
+                                    `}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+                updateStatistics(requests.length, 0, 0);
+                
+            } catch (error) {
+                console.error('Error loading pending requests:', error);
+                document.getElementById('pendingRequests').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fa-solid fa-exclamation-triangle me-2"></i>
+                        Có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại.
+                    </div>
+                `;
+            }
+        }
+        
+        function showConfirmModal(requestId, action, message) {
+            currentRequestId = requestId;
+            currentAction = action;
+            document.getElementById('confirmMessage').textContent = message;
+            
+            const confirmButton = document.getElementById('confirmAction');
+            if (action === 'approve') {
+                confirmButton.className = 'btn btn-success';
+                confirmButton.innerHTML = '<i class="fa-solid fa-check me-1"></i>Duyệt';
+            } else {
+                confirmButton.className = 'btn btn-danger';
+                confirmButton.innerHTML = '<i class="fa-solid fa-times me-1"></i>Từ chối';
+            }
+            
+            const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            modal.show();
+        }
+        
+        document.getElementById('confirmAction').addEventListener('click', async function() {
+            if (!currentAction || !currentRequestId) return;
+            
+            try {
+                const endpoint = currentAction === 'approve' 
+                    ? `/api/admin/withdraw/approve/${currentRequestId}`
+                    : `/api/admin/withdraw/reject/${currentRequestId}`;
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    // Success
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
+                    modal.hide();
+                    
+                    showAlert('success', result.message || 'Thao tác thành công!');
+                    
+                    // Reload requests
+                    loadRequestsByStatus(currentStatus);
+                    updateStatistics();
+                    
+                } else {
+                    // Error
+                    showAlert('danger', result.error || 'Có lỗi xảy ra khi thực hiện thao tác');
+                }
+                
+            } catch (error) {
+                console.error('Error processing request:', error);
+                showAlert('danger', 'Có lỗi xảy ra khi thực hiện thao tác');
+            }
+        });
+        
+        async function updateStatistics() {
+            try {
+                // Get counts for each status
+                const [pendingResponse, approvedResponse, rejectedResponse, cancelledResponse] = await Promise.all([
+                    fetch('/api/admin/withdraw/requests?status=PENDING'),
+                    fetch('/api/admin/withdraw/requests?status=APPROVED'),
+                    fetch('/api/admin/withdraw/requests?status=REJECTED'),
+                    fetch('/api/admin/withdraw/requests?status=CANCELLED')
+                ]);
+                
+                const pendingRequests = await pendingResponse.json();
+                const approvedRequests = await approvedResponse.json();
+                const rejectedRequests = await rejectedResponse.json();
+                const cancelledRequests = await cancelledResponse.json();
+                
+                document.getElementById('pendingCount').textContent = pendingRequests.length;
+                document.getElementById('approvedCount').textContent = approvedRequests.length;
+                document.getElementById('rejectedCount').textContent = rejectedRequests.length;
+                document.getElementById('cancelledCount').textContent = cancelledRequests.length;
+            } catch (error) {
+                console.error('Error updating statistics:', error);
+            }
+        }
+        
+        function formatNumber(num) {
+            return new Intl.NumberFormat('vi-VN').format(num);
+        }
+        
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
+        }
+        
+        // Filter functions
+        function applyFilters() {
+            // Get filter values from form
+            currentFilters.dateFrom = document.getElementById('dateFrom').value;
+            currentFilters.dateTo = document.getElementById('dateTo').value;
+            currentFilters.searchName = document.getElementById('searchName').value.trim();
+            currentFilters.searchAccount = document.getElementById('searchAccount').value.trim();
+            currentFilters.searchBank = document.getElementById('searchBank').value.trim();
+            
+            // Reload requests with current filters
+            loadRequestsByStatus(currentStatus);
+            
+            showAlert('info', 'Đã áp dụng bộ lọc');
+        }
+        
+        function clearFilters() {
+            // Clear all filter inputs
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            document.getElementById('searchName').value = '';
+            document.getElementById('searchAccount').value = '';
+            document.getElementById('searchBank').value = '';
+            
+            // Reset filter object
+            currentFilters = {
+                dateFrom: '',
+                dateTo: '',
+                searchName: '',
+                searchAccount: '',
+                searchBank: ''
+            };
+            
+            // Reload requests without filters
+            loadRequestsByStatus(currentStatus);
+            
+            showAlert('info', 'Đã xóa bộ lọc');
+        }
+        
+        // Allow Enter key to trigger filter
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const target = e.target;
+                if (target.id === 'searchName' || target.id === 'searchAccount' || target.id === 'searchBank') {
+                    applyFilters();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

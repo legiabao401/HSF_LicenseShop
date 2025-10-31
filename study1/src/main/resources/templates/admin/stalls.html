@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý gian hàng - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            color: #333;
+            z-index: 1000;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            border-right: 1px solid rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-header .navbar-brand {
+            color: #ff7b00;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        
+        .sidebar-header .navbar-brand:hover {
+            color: #e66a00;
+        }
+        
+        .menu-section {
+            padding: 20px 0;
+        }
+        
+        .section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 20px 10px;
+            margin-bottom: 10px;
+        }
+        
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #ff7b00;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            margin: 2px 0;
+            font-weight: 500;
+        }
+        
+        .menu-item:hover {
+            background-color: rgba(255, 123, 0, 0.1);
+            color: #e66a00;
+            border-left-color: #ff7b00;
+            transform: translateX(5px);
+        }
+        
+        .menu-item.active {
+            background-color: rgba(255, 123, 0, 0.15);
+            color: #e66a00;
+            border-left-color: #ff7b00;
+            font-weight: 600;
+        }
+        
+        .menu-item i {
+            width: 20px;
+            margin-right: 12px;
+            font-size: 16px;
+        }
+        
+        .main-content {
+            margin-left: 280px;
+            padding: 0;
+            min-height: 100vh;
+        }
+        
+        .top-navbar {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .content-area {
+            padding: 30px;
+        }
+        
+        .page-header {
+            background: white;
+            border-radius: 12px;
+            padding: 18px 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .page-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .table-header {
+            background: #f8f9fa;
+            padding: 20px 25px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .table-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0;
+        }
+        
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table th {
+            background: #f8f9fa;
+            border-top: none;
+            border-bottom: 2px solid #e9ecef;
+            font-weight: 600;
+            color: #495057;
+            padding: 15px;
+        }
+        
+        .table td {
+            padding: 15px;
+            vertical-align: middle;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background-color: #d1f2eb;
+            color: #0f5132;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-action {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-edit {
+            background-color: #ff7b00;
+            color: white;
+        }
+        
+        .btn-edit:hover {
+            background-color: #e66a00;
+            color: white;
+        }
+        
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-delete:hover {
+            background-color: #c82333;
+            color: white;
+        }
+        
+        .btn-view {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-view:hover {
+            background-color: #5a6268;
+            color: white;
+        }
+        
+        .btn-lock {
+            background-color: #ffc107;
+            color: #000;
+        }
+        
+        .btn-lock:hover {
+            background-color: #e0a800;
+            color: #000;
+        }
+        
+        .btn-lock.active {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-lock.active:hover {
+            background-color: #218838;
+            color: white;
+        }
+        
+        .btn-lock.inactive {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-lock.inactive:hover {
+            background-color: #c82333;
+            color: white;
+        }
+        
+        .btn-lock i {
+            font-size: 0.9rem;
+        }
+        
+        .btn-approve {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-approve:hover {
+            background-color: #218838;
+            color: white;
+        }
+        
+        .btn-reject {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-reject:hover {
+            background-color: #c82333;
+            color: white;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        
+        .stats-card.clickable {
+            cursor: pointer;
+        }
+        
+        .stats-card.clickable:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 123, 0, 0.1);
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .table-header {
+            border-bottom: 2px solid #f8f9fa;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .table-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .table-responsive {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="d-flex align-items-center justify-content-between">
+                <a class="navbar-brand d-flex align-items-center" th:href="@{/admin}" href="/admin">
+                    <i class="fa-solid fa-shield-halved me-2" style="color:#ff7b00;"></i>
+                    License Shop Admin
+                </a>
+            </div>
+        </div>
+        
+        <div class="menu-section">
+            <div class="section-title">ADMIN</div>
+            <a href="/admin" class="menu-item">
+                <i class="fas fa-tachometer-alt"></i>
+                Dashboard
+            </a>
+        </div>
+        
+        <div class="menu-section">
+            <div class="section-title">SELLER</div>
+            <a href="/seller/gross-sales" class="menu-item">
+                <i class="fas fa-shopping-cart"></i>
+                Doanh số
+            </a>
+            <a href="/seller/stall-management" class="menu-item">
+                <i class="fas fa-clipboard-list"></i>
+                Quản lý gian hàng
+            </a>
+            <a href="/seller/orders" class="menu-item">
+                <i class="fas fa-file-invoice-dollar"></i>
+                Đơn hàng sản phẩm
+            </a>
+            <a href="/seller/reviews" class="menu-item">
+                <i class="fas fa-comment"></i>
+                Đánh giá
+            </a>
+            <a href="/withdraw" class="menu-item">
+                <i class="fas fa-money-bill-transfer"></i>
+                Rút tiền
+            </a>
+        </div>
+        
+        <div class="menu-section">
+            <div class="section-title">QUẢN LÝ</div>
+            <a href="/admin/users" class="menu-item">
+                <i class="fas fa-users"></i>
+                Quản lý người dùng
+            </a>
+            <a href="/admin/stalls" class="menu-item">
+                <i class="fas fa-store"></i>
+                Quản lý cửa hàng
+            </a>
+            <a href="/admin/withdraw-requests" class="menu-item">
+                <i class="fas fa-money-bill-transfer"></i>
+                Yêu cầu rút tiền
+            </a>
+            <a href="/admin/audit-logs" class="menu-item">
+                <i class="fas fa-clipboard-list"></i>
+                Audit Logs
+            </a>
+            <a href="/admin/api-logs" class="menu-item">
+                <i class="fas fa-code"></i>
+                API Logs
+            </a>
+            <a href="/admin/user-activity-logs" class="menu-item">
+                <i class="fas fa-user-clock"></i>
+                User Activity Logs
+            </a>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navbar -->
+        <div class="top-navbar">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-outline-secondary me-3" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <!-- Profile Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-warning dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" style="border-color:#ff7b00;color:#ff7b00;">
+                        <img th:src="${user != null} ? @{/api/profile/avatar/me} : '/images/default-avatar.svg'" 
+                             class="rounded-circle" 
+                             style="width: 24px; height: 24px; object-fit: cover;"
+                             alt="Avatar">
+                        <span th:text="${username}">Admin</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" th:href="@{/profile}" href="/profile"><i class="fa-solid fa-user me-2"></i>Thông tin cá nhân</a></li>
+                        <li><a class="dropdown-item" th:href="@{/change-password}" href="/change-password"><i class="fa-solid fa-key me-2"></i>Đổi mật khẩu</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" th:href="@{/logout}" href="/logout"><i class="fa-solid fa-right-from-bracket me-2"></i>Đăng xuất</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Success/Error Messages -->
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span th:text="${errorMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="page-title">Quản lý cửa hàng & gian hàng</h1>
+                        <small class="text-muted">Quản lý cửa hàng, duyệt gian hàng</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stats-card clickable" onclick="showSellersList()">
+                        <div class="d-flex align-items-center">
+                            <div class="stat-icon me-3">
+                                <i class="fas fa-users fa-2x" style="color:#ff7b00;"></i>
+                            </div>
+                            <div>
+                                <div class="stat-number" th:text="${#lists.size(sellers)}">0</div>
+                                <div class="stat-label">Tổng số cửa hàng</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card clickable" onclick="showPendingStalls()">
+                        <div class="d-flex align-items-center">
+                            <div class="stat-icon me-3">
+                                <i class="fas fa-store fa-2x" style="color:#28a745;"></i>
+                            </div>
+                            <div>
+                                <div class="stat-number" th:text="${#lists.size(pendingStalls)}">0</div>
+                                <div class="stat-label">Gian hàng chờ duyệt</div>
+                            </div>
+                    </div>
+                </div>
+            </div>
+            
+                <div class="col-md-3">
+                    <div class="stats-card clickable" onclick="showTopSellers()">
+                        <div class="d-flex align-items-center">
+                            <div class="stat-icon me-3">
+                                <i class="fas fa-trophy fa-2x" style="color:#ffc107;"></i>
+                        </div>
+                            <div>
+                                <div class="stat-number" th:text="${#lists.size(topSellers)}">0</div>
+                                <div class="stat-label">Top 5 cửa hàng</div>
+                                    </div>
+                                    </div>
+                                    </div>
+                                    </div>
+                                    </div>
+            
+            <!-- Shop Search (outside table header/container) -->
+            <div id="shopSearchBar" class="mb-3" style="display: none;">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" class="form-control" id="shopSearchInput" 
+                                   placeholder="Tìm kiếm theo tên shop hoặc người dùng...">
+                                    </div>
+                                </div>
+                            </div>
+                            </div>
+            
+            <!-- Sellers List Section (Hidden by default) -->
+            <div id="sellersListSection" class="table-container mb-4" style="display: none;">
+                <div class="table-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="table-title mb-0">
+                            <i class="fas fa-users me-2" style="color:#ff7b00;"></i>
+                            Danh sách cừa hàng
+                        </h5>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tên shop</th>
+                                <th>Tên người dùng</th>
+                                <th>Số gian hàng</th>
+                                <th>Ngày đăng ký</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="sellerData : ${sellerRevenue}">
+                                <td th:text="${sellerData.seller.id}">1</td>
+                                <td th:text="${sellerData.shopName}">Tên shop</td>
+                                <td th:text="${sellerData.seller.username}">Người dùng</td>
+                                <td th:text="${sellerData.stallsCount}">0</td>
+                                <td th:text="${sellerData.shop != null ? #temporals.format(sellerData.shop.createdAt, 'dd/MM/yyyy') : 'Chưa có shop'}">01/01/2024</td>
+                                <td>
+                                    <span class="badge bg-success" 
+                                          th:if="${sellerData.seller.status != null and sellerData.seller.status.name() == 'ACTIVE'}">Đang hoạt động</span>
+                                    <span class="badge bg-danger" 
+                                          th:if="${sellerData.seller.status != null and sellerData.seller.status.name() == 'INACTIVE'}">Tạm khóa</span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-action btn-lock" 
+                                                th:classappend="${sellerData.seller.status.name() == 'ACTIVE'} ? 'active' : 'inactive'"
+                                                title="Khóa/Mở khóa cửa hàng"
+                                                th:data-seller-id="${sellerData.seller.id}" 
+                                                th:data-seller-status="${sellerData.seller.status.name()}"
+                                                onclick="toggleSellerLock(this.dataset.sellerId, this.dataset.sellerStatus)">
+                                            <i class="fas fa-unlock" th:if="${sellerData.seller.status.name() == 'ACTIVE'}"></i>
+                                            <i class="fas fa-lock" th:if="${sellerData.seller.status.name() == 'INACTIVE'}"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Pending Stalls Section -->
+            <div id="pendingStallsSection" class="table-container mb-4">
+                <div class="table-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="table-title mb-0">
+                            <i class="fas fa-clock me-2" style="color:#ffc107;"></i>
+                            Gian hàng chờ duyệt
+                        </h5>
+                        <button class="btn btn-sm btn-outline-warning" onclick="showHistory()" style="border-color:#ff7b00;color:#ff7b00;">
+                            <i class="fas fa-history me-1"></i>Lịch sử
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tên gian hàng</th>
+                                <th>Loại kinh doanh</th>
+                                <th>Danh mục</th>
+                                <th>Mô tả ngắn</th>
+                                <th>Ngày tạo</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="stall : ${pendingStalls}">
+                                <td th:text="${stall.id}">1</td>
+                                <td th:text="${stall.stallName}">Gian hàng 1</td>
+                                <td th:text="${stall.businessType}">Thương mại</td>
+                                <td th:text="${stall.stallCategory}">Điện tử</td>
+                                <td th:text="${stall.shortDescription}">Mô tả ngắn</td>
+                                <td th:text="${#temporals.format(stall.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2024 10:00</td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-secondary" title="Xem chi tiết"
+                                            th:data-stall-id="${stall.id}"
+                                            th:data-stall-name="${stall.stallName}"
+                                            th:data-business-type="${stall.businessType}"
+                                            th:data-stall-category="${stall.stallCategory}"
+                                            th:data-discount-percentage="${stall.discountPercentage}"
+                                            th:data-short-description="${stall.shortDescription}"
+                                            th:data-detailed-description="${stall.detailedDescription}"
+                                            th:data-created-at="${stall.createdAt}"
+                                            th:data-stall-image-url="@{'/admin/stalls/' + ${stall.id} + '/image'}"
+                                            onclick="viewStallDetailsFromData(this)">
+                                        <i class="fas fa-eye me-1"></i>Xem
+                                        </button>
+                                    <button class="btn btn-sm btn-success" th:onclick="'approveStall(' + ${stall.id} + ')'">
+                                        <i class="fas fa-check me-1"></i>Duyệt
+                                        </button>
+                                    <button class="btn btn-sm btn-danger" th:onclick="'rejectStall(' + ${stall.id} + ')'">
+                                        <i class="fas fa-times me-1"></i>Từ chối
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(pendingStalls)}">
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="fas fa-check-circle fa-2x mb-2" style="color:#28a745;"></i><br>
+                                    Không có gian hàng nào chờ duyệt.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                                    </div>
+                                    </div>
+            
+            <!-- History Section (Hidden by default) -->
+            <div id="historySection" class="table-container mb-4" style="display: none;">
+                <div class="table-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="table-title mb-0">
+                            <i class="fas fa-history me-2" style="color:#6c757d;"></i>
+                            Lịch sử gian hàng
+                        </h5>
+                        <button class="btn btn-sm btn-outline-danger" onclick="hideHistory()">
+                            <i class="fas fa-times me-1"></i>Đóng
+                                        </button>
+                                    </div>
+                </div>
+                
+                <!-- Combined History Table -->
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tên gian hàng</th>
+                                <th>Loại kinh doanh</th>
+                                <th>Danh mục</th>
+                                <th>Trạng thái</th>
+                                <th>Ngày xử lý</th>
+                                <th>Lý do</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="stall : ${historyStalls}">
+                                <td th:text="${stall.id}">1</td>
+                                <td th:text="${stall.stallName}">Gian hàng 1</td>
+                                <td th:text="${stall.businessType}">Thương mại</td>
+                                <td th:text="${stall.stallCategory}">Điện tử</td>
+                                <td>
+                                    <span class="badge bg-success" 
+                                          th:if="${stall.status == 'CLOSED' or stall.status == 'OPEN' or stall.status == 'ACTIVE'}">Đã duyệt</span>
+                                    <span class="badge bg-danger" 
+                                          th:if="${stall.status == 'REJECTED'}">Bị từ chối</span>
+                                </td>
+                                <td th:text="${#temporals.format(stall.approvedAt, 'dd/MM/yyyy HH:mm')}">01/01/2024 10:00</td>
+                                <td th:text="${stall.approvalReason}">Lý do</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(historyStalls)}">
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-2x mb-2"></i><br>
+                                    Không có lịch sử gian hàng nào.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                    </div>
+            
+            <!-- Revenue List Section (Hidden by default) -->
+            <div id="revenueListSection" class="table-container mb-4" style="display: none;">
+                <div class="table-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="table-title mb-0">
+                            
+                            Danh sách doanh thu
+                            <span class="badge bg-info ms-2" th:text="${#lists.size(sellerRevenue)}">0</span>
+                        </h5>
+                        <button class="btn btn-sm btn-outline-danger" onclick="hideRevenueList()">
+                            <i class="fas fa-times me-1"></i>Đóng
+                                        </button>
+                </div>
+            </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Xếp hạng</th>
+                                <th>Tên người bán</th>
+                                <th>Tên shop</th>
+                                <th>Số gian hàng</th>
+                                <th>Tổng đơn hàng</th>
+                                <th>Đơn hoàn thành</th>
+                                <th>Doanh thu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="sellerData, iterStat : ${sellerRevenue}">
+                                <td th:text="${iterStat.index + 1}">1</td>
+                                <td th:text="${sellerData.seller.username}">Người bán</td>
+                                <td th:text="${sellerData.shopName}">Tên shop</td>
+                                <td th:text="${sellerData.stallsCount}">0</td>
+                                <td th:text="${sellerData.totalOrders}">0</td>
+                                <td th:text="${sellerData.completedOrders}">0</td>
+                                <td th:text="${#numbers.formatDecimal(sellerData.totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</td>
+                            </tr>
+                        </tbody>
+                    </table>
+        </div>
+    </div>
+    
+            <!-- Top 5 Sellers Section (Hidden by default) -->
+            <div id="topSellersSection" class="table-container mb-4" style="display: none;">
+                <div class="table-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="table-title mb-0">
+                            <i class="fas fa-trophy me-2" style="color:#ffc107;"></i>
+                            Top 5 cửa hàng
+                        </h5>
+                        <button class="btn btn-sm btn-outline-danger" onclick="hideTopSellers()">
+                            <i class="fas fa-times me-1"></i>Đóng
+                                        </button>
+                                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Xếp hạng</th>
+                                <th>Tên shop</th>
+                                <th>Tên người bán</th>
+                                <th>Số gian hàng</th>
+                                <th>Tổng đơn hàng</th>
+                                <th>Đơn hoàn thành</th>
+                                <th>Doanh thu</th>
+                                <th>Huy chương</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="sellerData, iterStat : ${topSellers}">
+                                <td>
+                                    <span th:text="${iterStat.index + 1}">1</span>
+                                </td>
+                                <td th:text="${sellerData.shopName}">Tên shop</td>
+                                <td th:text="${sellerData.seller.username}">Người bán</td>
+                                <td th:text="${sellerData.stallsCount}">0</td>
+                                <td th:text="${sellerData.totalOrders}">0</td>
+                                <td th:text="${sellerData.completedOrders}">0</td>
+                                <td th:text="${#numbers.formatDecimal(sellerData.totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' VND'">0 VND</td>
+                                <td>
+                                    <i class="fas fa-trophy" th:if="${iterStat.index == 0}" style="color:#ffd700;"></i>
+                                    <i class="fas fa-medal" th:if="${iterStat.index == 1}" style="color:#c0c0c0;"></i>
+                                    <i class="fas fa-award" th:if="${iterStat.index == 2}" style="color:#cd7f32;"></i>
+                                    <i class="fas fa-star" th:if="${iterStat.index > 2}" style="color:#6c757d;"></i>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Sidebar toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check URL parameter to determine which tab to show
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirect = urlParams.get('redirect');
+            
+            if (redirect === 'shops') {
+                showSellersList();
+            } else if (redirect === 'pending') {
+                showPendingStalls();
+            }
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                
+                // Update main content margin
+                if (sidebar.classList.contains('collapsed')) {
+                    mainContent.style.marginLeft = '0';
+                } else {
+                    mainContent.style.marginLeft = '280px';
+                }
+            });
+            
+            // Set active menu item based on current path
+            const currentPath = window.location.pathname;
+            const menuItems = document.querySelectorAll('.menu-item[href]');
+            
+            menuItems.forEach(function(item) {
+                const itemPath = item.getAttribute('href');
+                if (currentPath === itemPath || (itemPath !== '/admin' && currentPath.startsWith(itemPath))) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // Handle modal confirm button
+            document.getElementById('confirmBtn').addEventListener('click', function() {
+                const reason = document.getElementById('reasonInput').value.trim();
+                
+                if (currentAction === 'reject' && !reason) {
+                    alert('Vui lòng nhập lý do từ chối.');
+                    return;
+                }
+                
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = currentAction === 'approve' ? '/admin/stalls/approve?redirect=pending' : '/admin/stalls/reject?redirect=pending';
+                
+                const stallIdInput = document.createElement('input');
+                stallIdInput.type = 'hidden';
+                stallIdInput.name = 'stallId';
+                stallIdInput.value = currentStallId;
+                form.appendChild(stallIdInput);
+                
+                if (reason) {
+                    const reasonInput = document.createElement('input');
+                    reasonInput.type = 'hidden';
+                    reasonInput.name = 'reason';
+                    reasonInput.value = reason;
+                    form.appendChild(reasonInput);
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+            });
+            
+            // Search functionality for shops
+            document.getElementById('shopSearchInput').addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const tableRows = document.querySelectorAll('#sellersListSection tbody tr');
+                
+                tableRows.forEach(row => {
+                    const shopName = row.cells[1].textContent.toLowerCase();
+                    const userName = row.cells[2].textContent.toLowerCase();
+                    
+                    if (shopName.includes(searchTerm) || userName.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Action button functions
+        let currentStallId = null;
+        let currentAction = null;
+        
+        function approveStall(stallId) {
+            currentStallId = stallId;
+            currentAction = 'approve';
+            
+            document.getElementById('actionModalLabel').textContent = 'Duyệt gian hàng';
+            document.getElementById('reasonLabel').textContent = 'Lý do duyệt (tùy chọn)';
+            document.getElementById('reasonHelp').textContent = 'Lý do này sẽ được ghi lại trong lịch sử.';
+            document.getElementById('reasonInput').placeholder = 'Nhập lý do duyệt (có thể để trống)...';
+            document.getElementById('reasonInput').value = '';
+            document.getElementById('confirmBtn').textContent = 'Duyệt';
+            document.getElementById('confirmBtn').className = 'btn btn-success';
+            
+            const modal = new bootstrap.Modal(document.getElementById('actionModal'));
+            modal.show();
+        }
+        
+        function rejectStall(stallId) {
+            currentStallId = stallId;
+            currentAction = 'reject';
+            
+            document.getElementById('actionModalLabel').textContent = 'Từ chối gian hàng';
+            document.getElementById('reasonLabel').textContent = 'Lý do từ chối';
+            document.getElementById('reasonHelp').textContent = 'Lý do từ chối là bắt buộc.';
+            document.getElementById('reasonInput').placeholder = 'Nhập lý do từ chối...';
+            document.getElementById('reasonInput').value = '';
+            document.getElementById('confirmBtn').textContent = 'Từ chối';
+            document.getElementById('confirmBtn').className = 'btn btn-danger';
+            
+            const modal = new bootstrap.Modal(document.getElementById('actionModal'));
+            modal.show();
+        }
+        
+        function deleteStall(stallId) {
+            if (confirm('Bạn có chắc chắn muốn xóa gian hàng này?')) {
+                // Implement delete functionality
+                console.log('Delete stall:', stallId);
+            }
+        }
+        
+        function viewStallDetailsFromData(button) {
+            // Get data from button attributes
+            const stallId = button.getAttribute('data-stall-id');
+            const stallName = button.getAttribute('data-stall-name');
+            const businessType = button.getAttribute('data-business-type');
+            const stallCategory = button.getAttribute('data-stall-category');
+            const discountPercentage = button.getAttribute('data-discount-percentage');
+            const shortDescription = button.getAttribute('data-short-description');
+            const detailedDescription = button.getAttribute('data-detailed-description');
+            const createdAt = button.getAttribute('data-created-at');
+            const stallImageUrl = button.getAttribute('data-stall-image-url');
+            
+            // Populate modal content
+            const content = document.getElementById('stallDetailsContent');
+            content.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><strong>Thông tin cơ bản</strong></h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>ID:</strong></td>
+                                <td>${stallId}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Tên gian hàng:</strong></td>
+                                <td>${stallName || 'Chưa có'}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Loại kinh doanh:</strong></td>
+                                <td>${businessType || 'Chưa có'}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Danh mục:</strong></td>
+                                <td>${stallCategory || 'Chưa có'}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Chiết khấu:</strong></td>
+                                <td>${discountPercentage || 0}%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Ngày tạo:</strong></td>
+                                <td>${formatDateTime(createdAt)}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>Mô tả</strong></h6>
+                        <div class="mb-3">
+                            <strong>Mô tả ngắn:</strong>
+                            <p class="text-muted">${shortDescription || 'Chưa có mô tả ngắn'}</p>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Mô tả chi tiết:</strong>
+                            <p class="text-muted">${detailedDescription || 'Chưa có mô tả chi tiết'}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6><strong>Hình ảnh gian hàng</strong></h6>
+                        ${stallImageUrl ? 
+                            `<img src="${stallImageUrl}" 
+                                  class="img-fluid" style="max-height: 200px;" alt="Hình ảnh gian hàng" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">` :
+                            '<p class="text-muted">Chưa có hình ảnh</p>'
+                        }
+                        <p class="text-muted" style="display:none;">Chưa có hình ảnh</p>
+                    </div>
+                </div>
+            `;
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('stallDetailsModal'));
+            modal.show();
+        }
+        
+        function formatDateTime(dateTimeStr) {
+            if (!dateTimeStr) return 'Chưa có thông tin';
+            const date = new Date(dateTimeStr);
+            return date.toLocaleString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        
+        // Show/Hide functions for different sections
+        function showSellersList() {
+            hideAllSections();
+            hideStallSections();
+            document.getElementById('shopSearchBar').style.display = 'block';
+            document.getElementById('sellersListSection').style.display = 'block';
+        }
+        
+        
+        function showPendingStalls() {
+            hideAllSections();
+            showStallSections();
+            document.getElementById('shopSearchBar').style.display = 'none';
+            document.getElementById('pendingStallsSection').style.display = 'block';
+        }
+        
+        function showRevenueList() {
+            hideAllSections();
+            hideStallSections();
+            document.getElementById('shopSearchBar').style.display = 'none';
+            document.getElementById('revenueListSection').style.display = 'block';
+        }
+        
+        function hideRevenueList() {
+            document.getElementById('revenueListSection').style.display = 'none';
+        }
+        
+        function showTopSellers() {
+            hideAllSections();
+            hideStallSections();
+            document.getElementById('shopSearchBar').style.display = 'none';
+            document.getElementById('topSellersSection').style.display = 'block';
+        }
+        
+        function hideTopSellers() {
+            document.getElementById('topSellersSection').style.display = 'none';
+        }
+        
+        function showHistory() {
+            // Hide all sections and show history
+            hideAllSections();
+            hideStallSections();
+            document.getElementById('shopSearchBar').style.display = 'none';
+            document.getElementById('historySection').style.display = 'block';
+        }
+        
+        function hideHistory() {
+            document.getElementById('historySection').style.display = 'none';
+            showDefaultView();
+        }
+        
+        function hideAllSections() {
+            document.getElementById('sellersListSection').style.display = 'none';
+            document.getElementById('revenueListSection').style.display = 'none';
+            document.getElementById('topSellersSection').style.display = 'none';
+            document.getElementById('historySection').style.display = 'none';
+        }
+        
+        function hideStallSections() {
+            document.getElementById('pendingStallsSection').style.display = 'none';
+        }
+        
+        function showStallSections() {
+            document.getElementById('pendingStallsSection').style.display = 'block';
+        }
+        
+        function showDefaultView() {
+            hideAllSections();
+            showStallSections();
+            document.getElementById('shopSearchBar').style.display = 'none';
+        }
+        
+        // Toggle seller lock function
+        function toggleSellerLock(sellerId, currentStatus) {
+            const action = currentStatus === 'ACTIVE' ? 'khóa' : 'mở khóa';
+            if (confirm(`Bạn có chắc chắn muốn ${action} cửa hàng này?`)) {
+                fetch(`/api/admin/sellers/${sellerId}/toggle-lock`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json().then(data => {
+                            alert(data.message || `Đã ${action} cửa hàng thành công!`);
+                            
+                            // Cập nhật giao diện ngay lập tức
+                            const button = document.querySelector(`button[data-seller-id="${sellerId}"]`);
+                            if (button) {
+                                const icon = button.querySelector('i');
+                                const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+                                
+                                // Cập nhật class
+                                button.classList.remove('active', 'inactive');
+                                button.classList.add(newStatus === 'ACTIVE' ? 'active' : 'inactive');
+                                
+                                // Cập nhật icon
+                                if (newStatus === 'ACTIVE') {
+                                    icon.className = 'fas fa-unlock';
+                                } else {
+                                    icon.className = 'fas fa-lock';
+                                }
+                                
+                                // Cập nhật data attribute
+                                button.setAttribute('data-seller-status', newStatus);
+                                
+                                // Cập nhật trạng thái trong bảng trực tiếp
+                                const row = button.closest('tr');
+                                if (row) {
+                                    const statusCell = row.querySelector('td:nth-child(6)'); // Cột trạng thái
+                                    if (statusCell) {
+                                        if (newStatus === 'ACTIVE') {
+                                            statusCell.innerHTML = '<span class="badge bg-success">Đang hoạt động</span>';
+                                        } else {
+                                            statusCell.innerHTML = '<span class="badge bg-danger">Tạm khóa</span>';
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    } else {
+                        return response.json().then(data => {
+                            alert('Lỗi: ' + (data.error || 'Có lỗi xảy ra'));
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi thực hiện thao tác');
+                });
+            }
+        }
+        
+    </script>
+
+    <!-- Modal for Approval/Rejection -->
+    <div class="modal fade" id="actionModal" tabindex="-1" aria-labelledby="actionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="actionModalLabel">Xác nhận hành động</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="reasonInput" class="form-label">
+                            <span id="reasonLabel">Lý do</span>
+                        </label>
+                        <textarea class="form-control" id="reasonInput" rows="3" 
+                                  placeholder="Nhập lý do chi tiết..."></textarea>
+                        <div class="form-text">
+                            <span id="reasonHelp">Lý do này sẽ được ghi lại trong lịch sử.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" id="confirmBtn">Xác nhận</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for Stall Details -->
+    <div class="modal fade" id="stallDetailsModal" tabindex="-1" aria-labelledby="stallDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="stallDetailsModalLabel">
+                        <i class="fas fa-store me-2"></i>Chi tiết gian hàng
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="stallDetailsContent">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

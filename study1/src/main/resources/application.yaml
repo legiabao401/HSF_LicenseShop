@@ -1,0 +1,139 @@
+spring:
+  application:
+    name: study1
+  datasource:
+    url: jdbc:mysql://localhost:3306/license_shop?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&useUnicode=true&characterEncoding=utf8
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 1234
+    hikari:
+      maximum-pool-size: 100
+      minimum-idle: 20
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
+  # mvc:
+  #   async:
+  #     request-timeout: 5000ms
+  task:
+    scheduling:
+      enabled: true
+      pool:
+        size: 20
+      thread-name-prefix: "scheduler-"
+    execution:
+      pool:
+        core-size: 20
+        max-size: 100
+        queue-capacity: 1000
+      thread-name-prefix: "payment-"
+      # Async executors for logging
+      activity-log-executor:
+        core-size: 10
+        max-size: 50
+        queue-capacity: 1000
+        thread-name-prefix: "activity-log-"
+      api-log-executor:
+        core-size: 5
+        max-size: 20
+        queue-capacity: 500
+        thread-name-prefix: "api-log-"
+  jpa:
+    hibernate:
+      ddl-auto: update
+      show-sql: false
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: dat2801zz@gmail.com
+    password: yoxh secc lerq ykat # <-- See security note below
+    from: dat2801zz@gmail.com
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    default-encoding: UTF-8
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: "84371119573-vd16u13p71e77ies0bch5d47n1c9fubs.apps.googleusercontent.com"
+            client-secret: "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"
+            scope:
+              - email
+              - profile
+            redirect-uri: "http://localhost:8080/login/oauth2/code/google"
+        provider:
+          google:
+            authorization-uri: "https://accounts.google.com/o/oauth2/auth"
+            token-uri: "https://oauth2.googleapis.com/token"
+            user-info-uri: "https://www.googleapis.com/oauth2/v2/userinfo"
+            user-name-attribute: "id"
+jwt:
+  secret-key: "nVhBcHbv71BB6bdjaopOoa4LWx/tjz9c7wBREJdpLU7O+EQBGH3Np+PmgDpMziH4zLGbqtt9CWDPbVwToH/cGyDbZeIJ5rUsL1MAeVs0ER0="
+
+# Security Configuration
+security:
+  captcha:
+    expire-minutes: 5
+    length: 6
+    max-attempts-per-ip: 5      # NEW
+    lockout-minutes: 15          # NEW
+  rate-limit:
+    ip-max-attempts: 15  # Tăng từ 10 lên 15 cho forgot password
+    ip-lockout-minutes: 60  # Giữ nguyên 1 giờ
+    forgot-password-ip-max-attempts: 20  # Riêng cho forgot password
+    captcha-required-attempts: 3
+    email-max-requests-per-hour: 3
+    otp-max-attempts: 5  # Giữ nguyên cho register
+    forgot-password-otp-max-attempts: 10  # Nới lỏng cho forgot password
+    otp-expire-minutes: 10
+    otp-lockout-minutes: 60  # Lockout 1 tiếng cho OTP
+
+  
+
+vnpay:
+  url: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+  return-url: "http://localhost:8080/payment/return"
+  tmn-code: "WFNMT41C"
+  secret-key: "GEGAKB9OUVUZFVVMOB5YNTSVBY1IWKTC"
+  version: "2.1.0"
+  command: "pay"
+  order-type: "other"
+  locale: "vn"
+  currency-code: "VND"
+logging:
+  level:
+    com.badat.study1: INFO
+    com.badat.study1.service.UserActivityLogService: INFO
+    com.badat.study1.service.ApiCallLogService: INFO
+    org.springframework.web: WARN
+    org.hibernate: WARN
+server:
+  port: 8080
+  tomcat:
+    connection-timeout: 30000
+    max-connections: 10000
+    accept-count: 1000
+    threads:
+      max: 2000
+      min-spare: 100

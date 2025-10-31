@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>License Shop - Homepage</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        .navbar-brand span { color: #0d6efd; font-weight: 700; }
+        .hero { background:#f8f9fa; border-radius:1rem; padding:2rem; box-shadow:0 6px 20px rgba(0,0,0,.06); }
+        .category-card { border:none; border-radius:1rem; box-shadow:0 6px 20px rgba(0,0,0,.08); transition:transform .2s, box-shadow .2s; }
+        .category-card:hover { transform:translateY(-4px); box-shadow:0 12px 28px rgba(0,0,0,.12); }
+        .category-icon { width:64px; height:64px; display:grid; place-items:center; border-radius:50%; }
+        .category-title { font-weight:700; }
+        .badge-dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+        .intro { font-size: .95rem; line-height: 1.6; }
+        .intro h2 { font-size: 1.25rem; }
+        .intro h3 { font-size: 1.1rem; }
+        .preview-track { overflow-x: auto; white-space: nowrap; scroll-behavior: smooth; }
+        .preview-card { display:inline-block; width: 260px; border-radius: .75rem; box-shadow:0 6px 20px rgba(0,0,0,.06); border:1px solid #eee; }
+        .preview-img-frame { background:#fff; padding:16px; border-top-left-radius:.75rem; border-top-right-radius:.75rem; }
+        .preview-card img { width:100%; height:200px; object-fit:cover; border-radius:.5rem; }
+        .preview-sep { height:2px; background: var(--bs-primary); margin: 0 16px; }
+        .rating-star { color: #ffc107; font-size: 0.9rem; }
+        .rating-text { font-size: 0.85rem; font-weight: 600; }
+        
+        /* Marquee styles */
+        .marquee-container {
+            background: white;
+            color: #0d6efd;
+            padding: 8px 0;
+            overflow: hidden;
+            position: relative;
+            z-index: 1000;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .marquee {
+            display: inline-block;
+            white-space: nowrap;
+            animation: marquee 40s linear infinite;
+            font-size: 14px;
+            font-weight: 500;
+            color: #0d6efd;
+        }
+        
+        .marquee:hover {
+            animation-play-state: paused;
+        }
+        
+        @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center me-2" th:href="@{/}" href="/">
+            <i class="fa-solid fa-cart-shopping me-2 text-primary"></i>
+            License Shop
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div id="nav" class="collapse navbar-collapse d-flex align-items-center">
+            <div class="flex-grow-1 mx-lg-3 d-none d-lg-block">
+                <form role="search" th:action="@{/products}" method="get">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="q" placeholder="Tìm kiếm tên gian hàng...">
+                        <button class="btn btn-primary" type="submit" aria-label="Tìm kiếm"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="d-none d-lg-flex align-items-center gap-2 ms-auto">
+                <div th:if="${!isAuthenticated}" class="d-flex align-items-center gap-2">
+                    <a class="btn btn-outline-secondary d-flex align-items-center gap-2" th:href="@{/login}" href="/login">
+                        <i class="fa-regular fa-user"></i>
+                        <span>Đăng nhập</span>
+                    </a>
+                    <a class="btn btn-outline-danger d-flex align-items-center gap-2" th:href="@{/cart}" href="/cart" aria-label="Giỏ hàng">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span>Giỏ hàng</span>
+                    </a>
+                </div>
+
+                <div th:if="${isAuthenticated}" class="d-flex align-items-center gap-2">
+                    <div class="btn btn-outline-success d-flex align-items-center gap-2" onclick="location.href='/payment'">
+                        <i class="fa-solid fa-wallet"></i>
+                        <span class="fw-bold" th:text="${#numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT')}">0</span>
+                    </div>
+
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img th:src="@{/api/profile/avatar/me}" 
+                                 class="rounded-circle" 
+                                 style="width: 24px; height: 24px; object-fit: cover;"
+                                 alt="Avatar"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                            <i class="fa-solid fa-user" style="display: none;"></i>
+                            <span th:text="${username}">User</span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" th:href="@{/profile}" href="/profile"><i class="fa-solid fa-user me-2"></i>Thông tin cá nhân</a></li>
+                            <li><a class="dropdown-item" th:href="@{/orders}" href="/orders"><i class="fa-solid fa-shopping-bag me-2"></i>Đơn hàng</a></li>
+                            <li th:if="${userRole == 'ADMIN'}"><a class="dropdown-item" th:href="@{/admin}" href="/admin"><i class="fa-solid fa-cogs me-2"></i>Quản lý</a></li>
+                            <li th:if="${userRole == 'SELLER'}"><a class="dropdown-item" th:href="@{/seller/stall-management}" href="/seller/stall-management"><i class="fa-solid fa-store me-2"></i>Quản lí gian hàng</a></li>
+                            <li th:if="${userRole == 'SELLER'}"><a class="dropdown-item" th:href="@{/withdraw}" href="/withdraw"><i class="fa-solid fa-money-bill-transfer me-2"></i>Rút tiền</a></li>
+                            <li><a class="dropdown-item" th:href="@{/payment-history}" href="/payment-history"><i class="fa-solid fa-credit-card me-2"></i>Lịch sử thanh toán</a></li>
+                            <li><a class="dropdown-item" th:href="@{/change-password}" href="/change-password"><i class="fa-solid fa-key me-2"></i>Đổi mật khẩu</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fa-solid fa-heart me-2"></i>Yêu thích</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="window.authManager.logout(); return false;"><i class="fa-solid fa-right-from-bracket me-2"></i>Đăng xuất</a></li>
+                        </ul>
+                    </div>
+
+                    <a class="btn btn-outline-secondary d-flex align-items-center gap-2" href="#" aria-label="Tin nhắn">
+                        <i class="fa-solid fa-message"></i>
+                        <span>Tin nhắn</span>
+                    </a>
+
+                    <a class="btn btn-outline-danger d-flex align-items-center gap-2" th:href="@{/cart}" href="/cart" aria-label="Giỏ hàng">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span>Giỏ hàng</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Marquee Announcement -->
+<div class="marquee-container">
+    <div class="marquee">
+        <i class="fa-solid fa-bullhorn me-2"></i>
+        License Shop - Mua bán sản phẩm số . Mọi giao dịch trên trang đều hoàn toàn tự động và được giữ tiền 3 ngày, thay thế cho hình thức trung gian, các bạn yên tâm giao dịch nhé.
+    </div>
+</div>
+
+<main class="container py-4 py-md-5">
+
+    <!-- Mobile Search Form -->
+    <div class="d-lg-none mb-4">
+        <form role="search" th:action="@{/products}" method="get">
+            <div class="input-group">
+                <input type="text" class="form-control" name="q" placeholder="Tìm kiếm tên gian hàng...">
+                <button class="btn btn-primary" type="submit" aria-label="Tìm kiếm"><i class="fa-solid fa-magnifying-glass"></i></button>
+            </div>
+        </form>
+    </div>
+
+    <div th:if="${!isAuthenticated}" class="hero mb-4 mb-md-5">
+        <div class="text-center">
+            <h1 class="display-5 fw-bold mb-3 text-primary">Chào mừng đến với License Shop</h1>
+            <p class="lead mb-4 text-secondary">Nền tảng giao dịch sản phẩm số uy tín và an toàn cho cộng đồng MMO</p>
+            <div class="d-flex gap-3 justify-content-center">
+                <a class="btn btn-primary btn-lg" th:href="@{/register}" href="/register">
+                    <i class="fa-solid fa-user-plus me-2"></i>Đăng ký ngay
+                </a>
+                <a class="btn btn-outline-primary btn-lg" th:href="@{/login}" href="/login">
+                    <i class="fa-solid fa-sign-in-alt me-2"></i>Đăng nhập
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${isAuthenticated}" class="alert d-flex align-items-center mb-4 bg-success-subtle border-success-subtle text-success-emphasis" role="alert" style="border-radius:.5rem;">
+        <i class="fa-solid fa-circle-check me-2"></i>
+        <div>
+            Xin chào <strong th:text="${username}">User</strong>. Bạn đã đăng nhập thành công – sẵn sàng mua sắm thôi!
+        </div>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <section class="mb-4 mb-md-5">
+        <div class="text-center mb-2">
+            <h5 class="text-primary mb-0">-- Gian hàng nổi bật --</h5>
+        </div>
+        <br>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <button id="prevPreview" class="btn btn-outline-secondary btn-sm" type="button"><i class="fa-solid fa-chevron-left"></i></button>
+            <div id="previewTrack" class="preview-track flex-grow-1 mx-2">
+                <a th:if="${stalls}" th:each="s : ${stalls}"
+                   th:href="@{'/products?stallId=' + ${s.stallId}}"
+                   class="text-decoration-none text-dark">
+                    <div class="preview-card me-2">
+                        <div class="preview-img-frame">
+                            <img th:if="${s.stallId != null}" th:src="@{'/stall-image/' + ${s.stallId}}" alt="stall">
+                            <div th:if="${s.stallId == null}" class="bg-light d-flex align-items-center justify-content-center" style="height:200px;border-radius:.5rem;">
+                                <i class="fa-solid fa-store text-secondary" style="font-size:34px;"></i>
+                            </div>
+                        </div>
+                        <div class="preview-sep"></div>
+                        <div class="p-3" style="line-height:1.5;">
+                            <div class="fw-semibold text-truncate" th:text="${s.stallName}">Tên gian hàng</div>
+                            <div class="small mt-1">
+                                <div class="text-muted">Sản phẩm</div>
+                                <div class="text-truncate" th:text="${s.stallCategory != null ? s.stallCategory : 'Khác'}">Loại</div>
+                            </div>
+                            <div class="small mt-1">
+                                <div class="text-muted">Tên shop</div>
+                                <div class="text-truncate" th:text="${s.shopName}">Shop</div>
+                            </div>
+                            <div class="small mt-1">
+                                <div class="text-muted">Giá</div>
+                                <div class="text-truncate fw-semibold text-success" th:text="${s.priceRange}">Giá</div>
+                            </div>
+                            <div class="small mt-2 d-flex justify-content-between align-items-center">
+                                <span class="badge bg-primary-subtle text-primary">
+                                    <i class="fa-solid fa-box-open me-1"></i>
+                                    <span th:text="${s.productCount}">0</span> sản phẩm
+                                </span>
+                                <div th:if="${s.reviewCount != null and s.reviewCount > 0}" class="d-flex align-items-center">
+                                    <div class="rating-star me-1">
+                                        <i class="fa-solid fa-star"></i>
+                                        <span class="rating-text" th:text="${s.averageRating != null ? #numbers.formatDecimal(s.averageRating, 1, 1) : '0.0'}">0.0</span>
+                                    </div>
+                                    <small class="text-muted" th:text="'(' + ${s.reviewCount} + ')'">(0)</small>
+                                </div>
+                                <div th:if="${s.reviewCount == null or s.reviewCount == 0}" class="text-muted">
+                                    <i class="fa-regular fa-star rating-star"></i>
+                                    <small>Chưa có đánh giá</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <button id="nextPreview" class="btn btn-outline-secondary btn-sm" type="button"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+        <br>
+        <br>
+        
+    </section>
+
+
+
+</main>
+
+<section class="container pb-4 pb-md-5 intro">
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <div class="fw-semibold">Giới thiệu License Shop</div>
+            <button id="introToggleBtn" class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#introCollapse" aria-expanded="false" aria-controls="introCollapse">Mở rộng</button>
+        </div>
+        <div id="introCollapse" class="collapse">
+            <div class="card-body">
+                <div class="my-4"></div>
+                <h2 class="mb-3">🎯 <strong>License Shop – Nơi giao dịch sản phẩm số uy tín dành cho cộng đồng kiếm tiền online</strong></h2>
+                <p><strong>License Shop</strong> ra đời với sứ mệnh xây dựng một <strong>thị trường sản phẩm số minh bạch – an toàn – tiện lợi</strong>, giúp người mua và người bán trong cộng đồng MMO (Make Money Online) giao dịch dễ dàng, hạn chế tối đa rủi ro lừa đảo.</p>
+                <p>Trong nhiều năm qua, các hình thức <strong>giao dịch tự do trên mạng xã hội</strong> tiềm ẩn nhiều nguy cơ: hàng trùng, hàng giả, bị scam, hoặc mất tiền vì thiếu trung gian uy tín. Chính vì vậy, <strong>License Shop</strong> được tạo ra để trở thành <strong>cầu nối đáng tin cậy</strong>, giúp mọi giao dịch diễn ra minh bạch và đảm bảo quyền lợi cho cả hai bên.</p>
+
+                <div class="my-4"><hr class="border-0" style="height:1px;background:#e5e7eb"></div>
+                <h3 class="mt-4">⚙️ <strong>Các tính năng nổi bật của License Shop</strong></h3>
+                <h5 class="mt-3">🔍 Kiểm tra trùng lặp sản phẩm tự động</h5>
+                <p>Hệ thống của chúng tôi <strong>so sánh và kiểm tra từng sản phẩm</strong> được đăng bán, đảm bảo <strong>không có hàng trùng, hàng bị bán lại</strong>. Mỗi giao dịch là duy nhất — sản phẩm sau khi bán sẽ không xuất hiện lại trên sàn.</p>
+
+                <h5 class="mt-3">💳 Nạp tiền & thanh toán tự động</h5>
+                <p>Người dùng chỉ cần <strong>nạp đúng cú pháp</strong>, số dư sẽ <strong>tự động cập nhật sau 1–5 phút</strong>. Mọi quy trình thanh toán – nhận hàng đều <strong>diễn ra tức thì, hoàn toàn tự động</strong>.</p>
+
+                <h5 class="mt-3">⏳ Giữ tiền bảo vệ giao dịch trong 3 ngày</h5>
+                <p>Sau khi mua hàng, hệ thống <strong>tạm giữ tiền trong 3 ngày</strong> để bạn có thời gian kiểm tra, đổi mật khẩu, hoặc xác minh chất lượng sản phẩm. Nếu phát sinh sự cố, bạn có thể <strong>khiếu nại ngay trong giao diện tài khoản</strong> để được hỗ trợ nhanh nhất.</p>
+
+                <div class="my-4"><hr class="border-0" style="height:1px;background:#e5e7eb"></div>
+                <h3 class="mt-4">🛒 <strong>Các danh mục sản phẩm tại License Shop</strong></h3>
+                <ul>
+                    <li><strong>Email & tài khoản số</strong>: Gmail, Outlook, domain, tài khoản mạng xã hội (Facebook, Twitter, Zalo, Instagram…)</li>
+                    <li><strong>Dịch vụ kỹ thuật số</strong>: Key Windows, key bản quyền, phần mềm bảo mật, key diệt virus.</li>
+                </ul>
+
+                <div class="my-4"><hr class="border-0" style="height:1px;background:#e5e7eb"></div>
+                <h3 class="mt-4">🔐 <strong>License Shop – Giao dịch số, An tâm thật</strong></h3>
+                <p>Với <strong>chính sách bảo vệ người dùng rõ ràng</strong>, cơ chế <strong>giữ tiền – kiểm tra – xác thực minh bạch</strong>, License Shop mong muốn trở thành <strong>nền tảng giao dịch sản phẩm số hàng đầu Việt Nam</strong>, nơi người mua <strong>an tâm giao dịch</strong>, người bán <strong>yên tâm phát triển thương hiệu cá nhân</strong>, và cả cộng đồng cùng nhau <strong>xây dựng một môi trường MMO an toàn, chuyên nghiệp và bền vững</strong>.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="border-top py-5 mt-4">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-12 col-lg-4">
+                <h4 class="fw-bold mb-3">Liên hệ</h4>
+                <p>Liên hệ ngay nếu bạn có khó khăn khi sử dụng dịch vụ hoặc cần hợp tác.</p>
+                <ul class="list-unstyled small mb-0">
+                    <li class="mb-2"><i class="fa-regular fa-comment-dots me-2"></i> Chat với hỗ trợ viên</li>
+                    <li class="mb-2"><i class="fa-brands fa-facebook me-2"></i> License Shop</li>
+                    <li class="mb-2"><i class="fa-regular fa-envelope me-2"></i> support@example.com</li>
+                    <li><i class="fa-regular fa-clock me-2"></i> Mon-Sat 08:00am - 10:00pm</li>
+                </ul>
+            </div>
+            <div class="col-12 col-lg-4">
+                <h4 class="fw-bold mb-3">Thông tin</h4>
+                <ul class="list-unstyled mb-0 small">
+                    <li class="mb-2">Một ứng dụng nhằm kết nối, trao đổi, mua bán trong cộng đồng kiếm tiền online.</li>
+                    <li class="mb-2">Thanh toán tự động, nhận hàng ngay tức thì.</li>
+                    <li class="mb-2"><a class="link-secondary" th:href="@{/faqs}" target="_blank" rel="noopener noreferrer">Câu hỏi thường gặp</a></li>
+                    <li><a class="link-secondary" th:href="@{/terms}" target="_blank" rel="noopener noreferrer">Điều khoản sử dụng</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="border-top py-3">
+    <div class="container d-flex justify-content-between align-items-center small">
+        <div>© <span th:text="${#temporals.format(#temporals.createNow(),'yyyy')}">2025</span> License Shop</div>
+        <div class="text-muted">Liên hệ: support@example.com</div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/auth.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Check authentication status
+        if (window.authManager && window.authManager.isAuthenticated()) {
+            console.log('User is authenticated:', window.authManager.getCurrentUser());
+        } else {
+            console.log('User is not authenticated');
+        }
+        var collapseEl = document.getElementById('introCollapse');
+        var toggleBtn = document.getElementById('introToggleBtn');
+        if (!collapseEl || !toggleBtn) return;
+        var collapse = new bootstrap.Collapse(collapseEl, { toggle: false });
+        collapseEl.addEventListener('show.bs.collapse', function () {
+            toggleBtn.textContent = 'Thu gọn';
+        });
+        collapseEl.addEventListener('hide.bs.collapse', function () {
+            toggleBtn.textContent = 'Mở rộng';
+        });
+
+        var track = document.getElementById('previewTrack');
+        var prev = document.getElementById('prevPreview');
+        var next = document.getElementById('nextPreview');
+        if (track && prev && next) {
+            var step = 280; // width ~ card width + gap
+            prev.addEventListener('click', function () { track.scrollLeft -= step; });
+            next.addEventListener('click', function () { track.scrollLeft += step; });
+        }
+    });
+
+    // Handle OAuth2 login success
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const login = urlParams.get('login');
+
+        if (token && login === 'success') {
+            // Store JWT token in localStorage
+            localStorage.setItem('accessToken', token);
+
+            // Show success message
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                <i class="fa-solid fa-check-circle me-2"></i>
+                Đăng nhập thành công!
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+
+            // Auto remove alert after 3 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 3000);
+
+            // Remove token from URL
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+
+            // Update UI without reloading page
+            updateUIAfterLogin();
+        } else {
+            // Check if user is already authenticated via localStorage
+            checkAuthenticationStatus();
+        }
+    });
+
+    function updateUIAfterLogin() {
+        // Update authentication status in UI
+        const loginBtn = document.querySelector('.login-btn');
+        const profileBtn = document.querySelector('.profile-btn');
+
+        if (loginBtn) {
+            loginBtn.style.display = 'none';
+        }
+        if (profileBtn) {
+            profileBtn.style.display = 'block';
+        }
+
+        // You can add more UI updates here
+        console.log('UI updated after login');
+    }
+
+    function checkAuthenticationStatus() {
+        const token = localStorage.getItem('accessToken');
+        if (token) {
+            // User is authenticated, update UI
+            updateUIAfterLogin();
+        }
+    }
+
+    // Function to handle category clicks
+    function viewCategory(category) {
+        // Map home categories to stallCategory strings used for filtering on /products
+        let type = '';
+        switch(category) {
+            case 'email':
+                type = 'Tài khoản Email';
+                break;
+            case 'software':
+                type = 'Thẻ cào (Điện thoại, Game)';
+                break;
+            case 'account':
+                type = 'Key Game';
+                break;
+            case 'key_license':
+                type = 'Key License';
+                break;
+            case 'other':
+                type = 'Khác';
+                break;
+            default:
+                type = '';
+        }
+
+        // Redirect to products page with category filter
+        window.location.href = `/products?type=${encodeURIComponent(type)}`;
+    }
+
+    // Handle OAuth2 login success (no auto-reload to avoid loops)
+    function handleOAuth2LoginSuccess() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('login') === 'success') {
+            showSuccessMessage('Đăng nhập Google thành công!');
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+    
+    function showSuccessMessage(message) {
+        // Create a temporary success message
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        alertDiv.innerHTML = `
+            <i class="fa-solid fa-check-circle me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alertDiv);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.parentNode.removeChild(alertDiv);
+            }
+        }, 3000);
+    }
+
+    // Initialize OAuth2 login success handler
+    document.addEventListener('DOMContentLoaded', function() {
+        handleOAuth2LoginSuccess();
+    });
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - License Shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            color: #333;
+            z-index: 1000;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            border-right: 1px solid rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-header .navbar-brand {
+            color: #ff7b00;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        
+        .sidebar-header .navbar-brand:hover {
+            color: #e66a00;
+        }
+        
+        .menu-section {
+            padding: 20px 0;
+        }
+        
+        .section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 20px 10px;
+            margin-bottom: 10px;
+        }
+        
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #ff7b00;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            margin: 2px 0;
+            font-weight: 500;
+        }
+        
+        .menu-item:hover {
+            background-color: rgba(255, 123, 0, 0.1);
+            color: #e66a00;
+            border-left-color: #ff7b00;
+            transform: translateX(5px);
+        }
+        
+        .menu-item.active {
+            background-color: rgba(255, 123, 0, 0.15);
+            color: #e66a00;
+            border-left-color: #ff7b00;
+            font-weight: 600;
+        }
+        
+        .menu-item i {
+            width: 20px;
+            margin-right: 12px;
+            font-size: 16px;
+        }
+        
+        .main-content {
+            margin-left: 280px;
+            padding: 0;
+            min-height: 100vh;
+        }
+        
+        .top-navbar {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .content-area {
+            padding: 30px;
+        }
+        
+        .page-header {
+            background: white;
+            border-radius: 12px;
+            padding: 18px 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .page-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .stats-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            margin-bottom: 15px;
+        }
+        
+        .stats-icon.users {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .stats-icon.stalls {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .stats-icon.audit {
+            background: linear-gradient(135deg, #6f42c1, #e83e8c);
+        }
+        
+        .stats-icon.today {
+            background: linear-gradient(135deg, #20c997, #17a2b8);
+        }
+        
+        .stats-icon.failed {
+            background: linear-gradient(135deg, #fd7e14, #dc3545);
+        }
+        
+        .stats-icon.security {
+            background: linear-gradient(135deg, #dc3545, #6f42c1);
+        }
+        
+        .stats-icon.view-all {
+            background: linear-gradient(135deg, #0d6efd, #6c757d);
+        }
+        
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .stats-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .table-header {
+            background: #f8f9fa;
+            padding: 20px 25px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .table-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0;
+        }
+        
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table th {
+            background: #f8f9fa;
+            border-top: none;
+            border-bottom: 2px solid #e9ecef;
+            font-weight: 600;
+            color: #495057;
+            padding: 15px;
+        }
+        
+        .table td {
+            padding: 15px;
+            vertical-align: middle;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background-color: #d1f2eb;
+            color: #0f5132;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-action {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-edit {
+            background-color: #ff7b00;
+            color: white;
+        }
+        
+        .btn-edit:hover {
+            background-color: #e66a00;
+            color: white;
+        }
+        
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-delete:hover {
+            background-color: #c82333;
+            color: white;
+        }
+        
+        .btn-view {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-view:hover {
+            background-color: #5a6268;
+            color: white;
+        }
+        
+        .btn-approve {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-approve:hover {
+            background-color: #218838;
+            color: white;
+        }
+        
+        .btn-reject {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-reject:hover {
+            background-color: #c82333;
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .table-responsive {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="d-flex align-items-center justify-content-between">
+                <a class="navbar-brand d-flex align-items-center" th:href="@{/admin}" href="/admin">
+                    <i class="fa-solid fa-shield-halved me-2" style="color:#ff7b00;"></i>
+                    License Shop Admin
+                </a>
+            </div>
+        </div>
+        
+        <div class="menu-section">
+            <div class="section-title">ADMIN</div>
+            <a href="/admin" class="menu-item">
+                <i class="fas fa-tachometer-alt"></i>
+                Dashboard
+            </a>
+        </div>
+        
+        <div class="menu-section">
+            <div class="section-title">SELLER</div>
+            <a href="/seller/gross-sales" class="menu-item">
+                <i class="fas fa-shopping-cart"></i>
+                Doanh số
+            </a>
+            <a href="/seller/stall-management" class="menu-item">
+                <i class="fas fa-clipboard-list"></i>
+                Quản lý gian hàng
+            </a>
+            <a href="/seller/orders" class="menu-item">
+                <i class="fas fa-file-invoice-dollar"></i>
+                Đơn hàng sản phẩm
+            </a>
+            <a href="/seller/reviews" class="menu-item">
+                <i class="fas fa-comment"></i>
+                Đánh giá
+            </a>
+            <a href="/withdraw" class="menu-item">
+                <i class="fas fa-money-bill-transfer"></i>
+                Rút tiền
+            </a>
+        </div>
+        
+        <div class="menu-section">
+            <div class="section-title">QUẢN LÝ</div>
+            <a href="/admin/users" class="menu-item">
+                <i class="fas fa-users"></i>
+                Quản lý người dùng
+            </a>
+            <a href="/admin/stalls" class="menu-item">
+                <i class="fas fa-store"></i>
+                Quản lý cửa hàng
+            </a>
+            <a href="/admin/withdraw-requests" class="menu-item">
+                <i class="fas fa-money-bill-transfer"></i>
+                Yêu cầu rút tiền
+            </a>
+            <a href="/admin/audit-logs" class="menu-item">
+                <i class="fas fa-clipboard-list"></i>
+                Audit Logs
+            </a>
+            <a href="/admin/api-logs" class="menu-item">
+                <i class="fas fa-code"></i>
+                API Logs
+            </a>
+            <a href="/admin/user-activity-logs" class="menu-item">
+                <i class="fas fa-user-clock"></i>
+                User Activity Logs
+            </a>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navbar -->
+        <div class="top-navbar">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-outline-secondary me-3" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <!-- Profile Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
+                        <img th:src="@{/api/profile/avatar/me}" 
+                             class="rounded-circle" 
+                             style="width: 24px; height: 24px; object-fit: cover;"
+                             onerror="this.src='/images/default-avatar.svg';"
+                             alt="Avatar">
+                        <span th:text="${username}">Admin</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" th:href="@{/profile}" href="/profile"><i class="fa-solid fa-user me-2"></i>Thông tin cá nhân</a></li>
+                        <li><a class="dropdown-item" th:href="@{/change-password}" href="/change-password"><i class="fa-solid fa-key me-2"></i>Đổi mật khẩu</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" th:href="@{/logout}" href="/logout"><i class="fa-solid fa-right-from-bracket me-2"></i>Đăng xuất</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Success/Error Messages -->
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span th:text="${errorMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="page-title">Admin Dashboard</h1>
+                        <small class="text-muted">Quản lý hệ thống License Shop</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stats Cards -->
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="d-flex align-items-center">
+                            <div class="stats-icon users">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="ms-3">
+                                <div class="stats-number" th:text="${totalUsers ?: 0}">0</div>
+                                <div class="stats-label">Tổng người dùng</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="d-flex align-items-center">
+                            <div class="stats-icon stalls">
+                                <i class="fas fa-store"></i>
+                            </div>
+                            <div class="ms-3">
+                                <div class="stats-number" th:text="${totalStalls ?: 0}">0</div>
+                                <div class="stats-label">Tổng gian hàng</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="d-flex align-items-center">
+                            <div class="stats-icon withdrawals">
+                                <i class="fas fa-money-bill-transfer"></i>
+                            </div>
+                            <div class="ms-3">
+                                <div class="stats-number" th:text="${pendingWithdrawals ?: 0}">0</div>
+                                <div class="stats-label">Yêu cầu rút tiền chờ duyệt</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="d-flex align-items-center">
+                            <div class="stats-icon audit">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            <div class="ms-3">
+                                <div class="stats-number" th:text="${totalAuditLogs ?: 0}">0</div>
+                                <div class="stats-label">Tổng Audit Logs</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Audit Log Stats -->
+            <div class="row mt-4">
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="d-flex align-items-center">
+                            <div class="stats-icon today">
+                                <i class="fas fa-calendar-day"></i>
+                            </div>
+                            <div class="ms-3">
+                                <div class="stats-number" th:text="${todayAuditLogs ?: 0}">0</div>
+                                <div class="stats-label">Hôm nay</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="d-flex align-items-center">
+                            <div class="stats-icon failed">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="ms-3">
+                                <div class="stats-number" th:text="${failedLogins ?: 0}">0</div>
+                                <div class="stats-label">Đăng nhập thất bại</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="d-flex align-items-center">
+                            <div class="stats-icon security">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="ms-3">
+                                <div class="stats-number" th:text="${securityEvents ?: 0}">0</div>
+                                <div class="stats-label">Sự kiện bảo mật</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <div class="d-flex align-items-center">
+                            <div class="stats-icon view-all">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="ms-3">
+                                <div class="stats-number" th:text="${totalAuditLogs + totalUsers + totalStalls}">0</div>
+                                <div class="stats-label">Tổng hoạt động</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <!-- Recent Activities -->
+            <div class="table-container">
+                <div class="table-header">
+                    <h5 class="table-title">Hoạt động gần đây</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Loại</th>
+                                <th>Mô tả</th>
+                                <th>Thời gian</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="activity : ${recentActivities}">
+                                <td th:text="${activity.type}">Loại hoạt động</td>
+                                <td th:text="${activity.description}">Mô tả</td>
+                                <td th:text="${#temporals.format(activity.createdAt, 'dd/MM/yyyy HH:mm')}">Thời gian</td>
+                                <td>
+                                    <span class="status-badge" 
+                                          th:classappend="${activity.status == 'SUCCESS'} ? 'status-active' : 
+                                                         (${activity.status == 'PENDING'} ? 'status-pending' : 'status-inactive')"
+                                          th:text="${activity.status == 'SUCCESS'} ? 'Thành công' : 
+                                                  (${activity.status == 'PENDING'} ? 'Chờ duyệt' : 'Thất bại')">
+                                        Trạng thái
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-action btn-view" title="Xem chi tiết">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(recentActivities)}">
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    <i class="fas fa-inbox fa-2x mb-2"></i><br>
+                                    Chưa có hoạt động nào.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-bolt me-2"></i>Thao tác nhanh
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <a href="/admin/users" class="btn btn-outline-primary w-100">
+                                        <i class="fas fa-users me-2"></i>Quản lý người dùng
+                                    </a>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <a href="/admin/stalls" class="btn btn-outline-success w-100">
+                                        <i class="fas fa-store me-2"></i>Quản lý cửa hàng
+                                    </a>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <a href="/admin/withdraw-requests" class="btn btn-outline-warning w-100">
+                                        <i class="fas fa-money-bill-transfer me-2"></i>Yêu cầu rút tiền
+                                    </a>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <a href="/admin/audit-logs" class="btn btn-outline-info w-100">
+                                        <i class="fas fa-clipboard-list me-2"></i>Audit Logs
+                                    </a>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <a href="/admin/api-logs" class="btn btn-outline-secondary w-100">
+                                        <i class="fas fa-code me-2"></i>API Logs
+                                    </a>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <a href="/admin/user-activity-logs" class="btn btn-outline-dark w-100">
+                                        <i class="fas fa-user-clock me-2"></i>User Activity Logs
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Sidebar toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            
+            if (sidebarToggle && sidebar && mainContent) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                    
+                    // Update main content margin
+                    if (sidebar.classList.contains('collapsed')) {
+                        mainContent.style.marginLeft = '0';
+                    } else {
+                        mainContent.style.marginLeft = '280px';
+                    }
+                });
+            }
+            
+            // Set active menu item based on current path
+            const currentPath = window.location.pathname;
+            const menuItems = document.querySelectorAll('.menu-item[href]');
+            
+            menuItems.forEach(function(item) {
+                const itemPath = item.getAttribute('href');
+                if (currentPath === itemPath || (itemPath !== '/admin' && currentPath.startsWith(itemPath))) {
+                    item.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

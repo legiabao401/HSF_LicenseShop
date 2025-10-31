@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Xác minh OTP - License Shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        .navbar-brand span { color: #0d6efd; font-weight: 700; }
+        .auth-page {
+            min-height: 100vh;
+            display: flex;
+            background: #f8f9fa;
+        }
+        .auth-left {
+            flex: 1;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+            color: #0d6efd;
+            position: relative;
+            overflow: hidden;
+        }
+        .auth-left::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.1;
+        }
+        .auth-right {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            background: white;
+        }
+        .auth-logo {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(13, 110, 253, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+        .auth-brand {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .auth-brand h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #0d6efd;
+        }
+        .auth-brand p {
+            font-size: 1.2rem;
+            color: #0d6efd;
+            margin-bottom: 0;
+        }
+        .verify-container {
+            max-width: 460px;
+            width: 100%;
+        }
+        .verify-card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            background: white;
+            overflow: hidden;
+            padding: 2rem;
+        }
+        .verify-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .verify-title {
+            font-weight: 700;
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        @media (max-width: 768px) {
+            .auth-page {
+                flex-direction: column;
+            }
+            .auth-left {
+                min-height: 40vh;
+                padding: 2rem 1rem;
+            }
+            .auth-right {
+                padding: 2rem 1rem;
+            }
+            .auth-brand h1 {
+                font-size: 2rem;
+            }
+            .auth-logo {
+                width: 80px;
+                height: 80px;
+                font-size: 2rem;
+                box-shadow: 0 8px 20px rgba(13, 110, 253, 0.3);
+            }
+        }
+    </style>
+    <meta name="base_url" th:content="@{/}">
+    <meta name="email" th:content="${email}">
+    <script>
+        document.addEventListener('DOMContentLoaded', function(){
+            // Get email from URL parameter first, then fallback to meta tag
+            const urlParams = new URLSearchParams(window.location.search);
+            const emailFromUrl = urlParams.get('email');
+            const emailMeta = document.querySelector('meta[name="email"]');
+            const emailText = document.getElementById('emailText');
+            const emailHidden = document.getElementById('emailHidden');
+            const emailVisible = document.getElementById('emailVisible');
+            
+            // Priority: URL parameter > meta tag > empty
+            const emailVal = emailFromUrl || (emailMeta ? (emailMeta.content || '') : '');
+            
+            if (emailText) emailText.textContent = emailVal || '';
+            if (emailHidden) emailHidden.value = emailVal || '';
+            if (emailVisible) emailVisible.value = emailVal || '';
+            
+            console.log('Email loaded from URL parameter:', emailFromUrl);
+            console.log('Final email value:', emailVal);
+            
+            // Prevent auto-submit when OTP input reaches 6 digits
+            const otpInput = document.getElementById('otp');
+            if (otpInput) {
+                otpInput.addEventListener('input', function(e) {
+                    // Only allow numbers
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                    
+                    // Don't auto-submit when reaching 6 digits
+                    if (e.target.value.length === 6) {
+                        // Just focus on submit button, don't submit
+                        const submitBtn = document.querySelector('button[type="submit"]');
+                        if (submitBtn) {
+                            submitBtn.focus();
+                        }
+                    }
+                });
+                
+                // Prevent form submission on Enter key in OTP input
+                otpInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        // Only submit if OTP is exactly 6 digits
+                        if (e.target.value.length === 6) {
+                            document.getElementById('otpForm').dispatchEvent(new Event('submit'));
+                        }
+                    }
+                });
+            }
+            
+            // Check lockout status
+            checkLockoutStatus();
+        });
+    </script>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center me-2" th:href="@{/}" href="/">
+            <i class="fa-solid fa-cart-shopping me-2 text-primary"></i>
+            License Shop
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div id="nav" class="collapse navbar-collapse d-flex align-items-center">
+            <div class="flex-grow-1 mx-lg-3 d-none d-lg-block">
+                <form role="search" th:action="@{/products}" method="get">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="q" placeholder="Tìm kiếm tên gian hàng...">
+                        <button class="btn btn-primary" type="submit" aria-label="Tìm kiếm"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="d-none d-lg-flex align-items-center gap-2 ms-auto">
+                <div class="d-flex align-items-center gap-2">
+                    <a class="btn btn-outline-secondary d-flex align-items-center gap-2" th:href="@{/login}" href="/login">
+                        <i class="fa-regular fa-user"></i>
+                        <span>Đăng nhập</span>
+                    </a>
+                    <a class="btn btn-outline-danger d-flex align-items-center gap-2" th:href="@{/cart}" href="/cart" aria-label="Giỏ hàng">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span>Giỏ hàng</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<main class="auth-page">
+    <div class="auth-left">
+        <div class="auth-logo">
+            <i class="fa-solid fa-cart-shopping"></i>
+        </div>
+        <div class="auth-brand">
+            <h1>License Shop</h1>
+            <p>Xác minh tài khoản của bạn</p>
+        </div>
+    </div>
+    
+    <div class="auth-right">
+        <div class="verify-container">
+            <div class="verify-card">
+                <div class="verify-header">
+                    <h1 class="verify-title">Xác minh OTP</h1>
+                </div>
+            
+            <div id="alert" class="alert alert-danger d-none" role="alert">
+                <i class="fa-solid fa-exclamation-triangle me-2"></i>
+                <span id="alertMessage"></span>
+            </div>
+            <div id="successAlert" class="alert alert-success d-none" role="alert">
+                <i class="fa-solid fa-check-circle me-2"></i>
+                <span id="successMessage"></span>
+            </div>
+            
+            <div id="lockoutAlert" class="alert alert-danger d-none" role="alert" style="border-left: 4px solid #dc3545;">
+                <div class="d-flex align-items-start">
+                    <i class="fa-solid fa-lock fa-2x me-3 text-danger"></i>
+                    <div class="flex-grow-1">
+                        <h6 class="alert-heading mb-2"><strong>Tài khoản tạm thời bị khóa</strong></h6>
+                        <p class="mb-2">Bạn đã nhập sai mã OTP quá 5 lần.</p>
+                        <p class="mb-0">Vui lòng thử lại sau: <strong id="lockoutTimer" class="text-danger fs-5">--:--</strong></p>
+                    </div>
+                </div>
+            </div>
+            
+            <form id="otpForm">
+                <p class="text-muted">Mã OTP đang được gửi tới email: <strong id="emailText"></strong></p>
+                <div class="alert alert-info" role="alert">
+                    <i class="fa-solid fa-info-circle me-2"></i>
+                    <strong>Lưu ý:</strong> Email có thể mất vài phút để đến hộp thư của bạn. Vui lòng kiểm tra cả thư mục spam nếu không thấy email.
+                </div>
+                <div class="alert alert-warning" role="alert">
+                    <i class="fa-solid fa-exclamation-triangle me-2"></i>
+                    <strong>Cảnh báo:</strong> Bạn chỉ có thể nhập sai OTP tối đa 5 lần. Sau đó email sẽ bị khóa trong 1 giờ.
+                </div>
+                <input type="hidden" id="emailHidden">
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="text" class="form-control" id="emailVisible" readonly style="background-color: #f8f9fa; cursor: not-allowed;">
+                    <div class="form-text">Email dùng để nhận OTP (không thể thay đổi)</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Mã OTP</label>
+                    <input type="text" class="form-control" id="otp" placeholder="Nhập mã OTP (6 chữ số)" 
+                           maxlength="6" pattern="[0-9]{6}" required autocomplete="off">
+                    <div class="form-text">Mã OTP có 6 chữ số và sẽ hết hạn sau 10 phút</div>
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">Xác nhận</button>
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="border-top py-3">
+    <div class="container d-flex justify-content-between align-items-center small">
+        <div>© <span th:text="${#temporals.format(#temporals.createNow(),'yyyy')}">2025</span> License Shop</div>
+        <div class="text-muted">Liên hệ: support@example.com</div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Only allow numeric input for OTP
+document.getElementById('otp').addEventListener('input', function(e) {
+    // Remove any non-numeric characters
+    this.value = this.value.replace(/[^0-9]/g, '');
+    
+    // Limit to 6 digits
+    if (this.value.length > 6) {
+        this.value = this.value.substring(0, 6);
+    }
+});
+
+// Auto-submit when 6 digits are entered
+document.getElementById('otp').addEventListener('input', function(e) {
+    if (this.value.length === 6) {
+        // Small delay to allow user to see the complete OTP
+        setTimeout(() => {
+            document.getElementById('otpForm').dispatchEvent(new Event('submit'));
+        }, 500);
+    }
+});
+
+// Function check lockout khi load page
+async function checkLockoutStatus() {
+    try {
+        const email = document.getElementById('emailHidden').value.trim();
+        if (!email) return;
+        
+        // Get type from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const type = urlParams.get('type') || 'register';
+        const purpose = type === 'forgot_password' ? 'forgot_password' : 'register';
+        
+        const response = await fetch('/api/auth/check-otp-lockout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, purpose })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.locked) {
+                showLockout(data.remainingSeconds);
+                disableOtpForm();
+            }
+        }
+    } catch (error) {
+        console.error('Error checking lockout:', error);
+    }
+}
+
+// Function hiển thị lockout với countdown
+function showLockout(remainingSeconds) {
+    const lockoutAlert = document.getElementById('lockoutAlert');
+    const timer = document.getElementById('lockoutTimer');
+    const otpForm = document.getElementById('otpForm');
+    
+    lockoutAlert.classList.remove('d-none');
+    otpForm.classList.add('d-none'); // Ẩn form OTP
+    
+    let remaining = Math.max(0, remainingSeconds);
+    
+    const updateTimer = () => {
+        if (remaining <= 0) {
+            // Reload page khi hết thời gian
+            location.reload();
+            return;
+        }
+        
+        const minutes = Math.floor(remaining / 60);
+        const seconds = remaining % 60;
+        timer.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        remaining--;
+    };
+    
+    updateTimer(); // Gọi ngay lần đầu
+    const interval = setInterval(updateTimer, 1000);
+}
+
+function disableOtpForm() {
+    document.getElementById('otp').disabled = true;
+    const submitBtn = document.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+}
+</script>
+<script>
+document.getElementById('otpForm').addEventListener('submit', async function (event) {
+    event.preventDefault();
+    const email = document.getElementById('emailHidden').value.trim();
+    const otp = document.getElementById('otp').value.trim();
+    const alertBox = document.getElementById('alert');
+    const successAlert = document.getElementById('successAlert');
+    const alertMessage = document.getElementById('alertMessage');
+    const successMessage = document.getElementById('successMessage');
+    const submitButton = document.querySelector('button[type="submit"]');
+    
+    // Hide all alerts
+    alertBox.classList.add('d-none');
+    successAlert.classList.add('d-none');
+    
+    // Validate email input
+    if (!email) {
+        showError('Email không được để trống');
+        return;
+    }
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showError('Email không hợp lệ');
+        return;
+    }
+    
+    // Validate OTP input
+    if (!otp) {
+        showError('Vui lòng nhập mã OTP');
+        return;
+    }
+    
+    if (otp.length !== 6) {
+        showError('Mã OTP phải có 6 chữ số');
+        return;
+    }
+    
+    // Validate OTP contains only numbers
+    if (!/^\d{6}$/.test(otp)) {
+        showError('Mã OTP chỉ được chứa số');
+        return;
+    }
+    
+    // Disable submit button to prevent multiple submissions
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang xác minh...';
+
+    try {
+        // Get type from URL to determine endpoint
+        const urlParams = new URLSearchParams(window.location.search);
+        const type = urlParams.get('type') || 'register';
+        const endpoint = type === 'forgot_password' 
+            ? '/api/auth/verify-forgot-password-otp'
+            : '/api/auth/verify-register-otp';
+            
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, otp })
+        });
+        
+        if (res.ok) {
+            let result = {};
+            const ct = res.headers.get('Content-Type') || '';
+            if (ct.includes('application/json')) {
+                result = await res.json();
+            }
+            // Update success message based on type
+            const successMessage = type === 'forgot_password' 
+                ? 'Mã OTP hợp lệ! Đang chuyển hướng...'
+                : 'Đăng ký thành công! Đang chuyển hướng...';
+            showSuccess(successMessage);
+            setTimeout(() => {
+                // Redirect based on result
+                if (result && result.data && result.data.nextUrl) {
+                    window.location.href = result.data.nextUrl;
+                } else {
+                    window.location.href = type === 'forgot_password' ? '/login' : '/login';
+                }
+            }, 2000);
+        } else if (res.status === 429) {
+            // Lockout response
+            try {
+                const errorData = await res.json();
+                if (errorData.locked) {
+                    showLockout(60 * 60); // Default 1 hour if no remainingSeconds
+                    showError('Bạn đã nhập sai OTP quá 5 lần. Tài khoản đã bị khóa trong 1 tiếng.');
+                } else {
+                    showError(errorData.error || 'Quá nhiều yêu cầu');
+                }
+            } catch (_) {
+                showError('Bạn đã nhập sai OTP quá 5 lần. Vui lòng thử lại sau 1 tiếng.');
+            }
+        } else {
+            let errorMessage = 'Sai OTP, vui lòng thử lại';
+            try {
+                const ct = res.headers.get('Content-Type') || '';
+                if (ct.includes('application/json')) {
+                    const errorData = await res.json();
+                    errorMessage = errorData.message || errorMessage;
+                } else {
+                    errorMessage = await res.text();
+                }
+            } catch (_) {}
+            
+            // UPDATE: Thêm check cho lockout message
+            if (errorMessage.includes('nhập sai OTP quá 5 lần') || errorMessage.includes('5 lần')) {
+                // Check remaining time qua API
+                await checkLockoutStatus();
+            }
+            
+            showError(errorMessage);
+        }
+    } catch (e) {
+        console.error('OTP verification error:', e);
+        showError('Đã có lỗi xảy ra. Vui lòng kiểm tra kết nối và thử lại');
+    } finally {
+        // Re-enable submit button
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Xác nhận';
+    }
+    
+    function showError(message) {
+        alertMessage.textContent = message;
+        alertBox.classList.remove('d-none');
+        successAlert.classList.add('d-none');
+        
+        // Focus on OTP input
+        document.getElementById('otp').focus();
+        document.getElementById('otp').select();
+    }
+    
+    function showSuccess(message) {
+        successMessage.textContent = message;
+        successAlert.classList.remove('d-none');
+        alertBox.classList.add('d-none');
+    }
+});
+
+// Call checkLockoutStatus khi page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Get email and type from URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const email = urlParams.get('email');
+    const type = urlParams.get('type') || 'register';
+    
+    if (email) {
+        document.getElementById('emailHidden').value = email;
+        document.getElementById('emailVisible').value = email;
+        document.getElementById('emailText').textContent = email;
+    }
+    
+    // Update UI based on type
+    if (type === 'forgot_password') {
+        document.querySelector('.verify-title').textContent = 'Xác thực OTP - Quên mật khẩu';
+        document.querySelector('.verify-brand p').textContent = 'Xác thực để đặt lại mật khẩu';
+        document.querySelector('.alert-warning').innerHTML = `
+            <i class="fa-solid fa-exclamation-triangle me-2"></i>
+            <strong>Cảnh báo:</strong> Bạn chỉ có thể nhập sai OTP tối đa 10 lần. 
+            Sau đó email sẽ bị khóa trong 1 giờ.
+        `;
+    }
+    
+    // Check lockout status
+    checkLockoutStatus();
+});
+</script>
+</body>
+</html>
+
+

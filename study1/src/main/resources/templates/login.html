@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Đăng nhập - License Shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        .navbar-brand span { color: #0d6efd; font-weight: 700; }
+        .auth-page {
+            min-height: 100vh;
+            display: flex;
+            background: #ffffff;
+        }
+        .auth-left {
+            flex: 1;
+            background: ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+            color: #0d6efd;
+            position: relative;
+            overflow: hidden;
+        }
+        .auth-left::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.1;
+        }
+        .auth-right {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            background: white;
+        }
+        .auth-logo {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(13, 110, 253, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+        .auth-brand {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .auth-brand h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #0d6efd;
+        }
+        .auth-brand p {
+            font-size: 1.2rem;
+            color: #0d6efd;
+            margin-bottom: 0;
+        }
+        .login-container {
+            max-width: 400px;
+            width: 100%;
+        }
+        .login-card {
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            background: white;
+            overflow: hidden;
+            padding: 2rem;
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .login-title {
+            font-weight: 700;
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        .login-subtitle {
+            color: #6c757d;
+            font-size: 1rem;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        .input-group-text {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            border: none;
+            color: white;
+            border-radius: 10px 0 0 10px;
+        }
+        .form-control {
+            border: 2px solid #e9ecef;
+            border-radius: 0 10px 10px 0;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+            transform: translateY(-2px);
+        }
+        .form-control.is-invalid {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 .25rem rgba(220,53,69,.25);
+        }
+        .invalid-feedback {
+            display: block;
+            font-size: 0.875rem;
+            color: #dc3545;
+            margin-top: 0.25rem;
+        }
+        .form-control.is-valid {
+            border-color: #198754;
+            box-shadow: 0 0 0 .25rem rgba(25,135,84,.25);
+        }
+        .form-check-input {
+            width: 1.2em;
+            height: 1.2em;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+        .form-check-input:focus {
+            border-color: #86b7fe;
+            outline: 0;
+            box-shadow: 0 0 0 .25rem rgba(13, 110, 253, 0.25);
+        }
+        .form-check-label {
+            color: #495057;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-left: 0.5rem;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(13, 110, 253, 0.3);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        .btn-primary:disabled {
+            opacity: 0.7;
+            transform: none;
+        }
+        .link-primary {
+            color: #0d6efd !important;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .link-primary:hover {
+            color: #0a58ca !important;
+            text-decoration: underline !important;
+        }
+        .alert {
+            border: none;
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .alert-success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+        }
+        .alert-danger {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+        }
+        .remember-forgot-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .divider {
+            text-align: center;
+            margin: 1.5rem 0;
+            position: relative;
+        }
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e9ecef;
+        }
+        .divider span {
+            background: white;
+            padding: 0 1rem;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .google-btn {
+            width: 100%;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            font-weight: 500;
+            color: #495057;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+        .google-btn:hover {
+            border-color: #dc3545;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.2);
+            color: #495057;
+            text-decoration: none;
+        }
+        .footer-links {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        .footer-links a {
+            color: #0d6efd;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .footer-links a:hover {
+            color: #0a58ca;
+            text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            .auth-page {
+                flex-direction: column;
+            }
+            .auth-left {
+                min-height: 40vh;
+                padding: 2rem 1rem;
+                background-color: white;
+                color: white;
+                background: white;
+            }
+            .auth-right {
+                padding: 2rem 1rem;
+            }
+            .auth-brand h1 {
+                font-size: 2rem;
+            }
+            .auth-logo {
+                width: 80px;
+                height: 80px;
+                font-size: 2rem;
+                box-shadow: 0 8px 20px rgba(13, 110, 253, 0.3);
+            }
+            .remember-forgot-container {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+        }
+    </style>
+    <meta name="base_url" th:content="@{/}">
+    <script>
+        // defer DOM-dependent actions until after DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function(){
+            const urlParams = new URLSearchParams(window.location.search);
+            const error = urlParams.get('error');
+            if (error) {
+                const alertEl = document.getElementById('alert');
+                if (alertEl){
+                    if (error === 'email_already_used_local') {
+                        alertEl.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Email này đã được sử dụng cho tài khoản đăng ký thủ công. Vui lòng sử dụng tên đăng nhập và mật khẩu để đăng nhập, hoặc sử dụng email khác để đăng nhập Google.';
+                    } else if (error === 'oauth2_failed') {
+                        alertEl.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Đăng nhập Google thất bại. Vui lòng thử lại.';
+                    } else {
+                        alertEl.textContent = 'Tên đăng nhập hoặc mật khẩu không đúng';
+                    }
+                    alertEl.classList.remove('d-none');
+                }
+            }
+
+            // Load saved credentials if remember me was checked
+            loadSavedCredentials();
+            
+            // Initialize captcha
+            initializeCaptcha();
+            
+            // Always show captcha (required for all login attempts)
+            showCaptcha();
+
+            // Handle login form submission
+            const loginForm = document.getElementById('loginForm');
+            const loginBtn = document.getElementById('loginBtn');
+            const rememberMeCheckbox = document.getElementById('rememberMe');
+            
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value.trim();
+                const password = document.getElementById('password').value;
+                const rememberMe = rememberMeCheckbox.checked;
+                const captchaInput = document.getElementById('captcha').value.trim();
+                
+                // Basic frontend validation
+                if (!username) {
+                    alert('Vui lòng nhập tên đăng nhập');
+                    return;
+                }
+                
+                if (!password) {
+                    alert('Vui lòng nhập mật khẩu');
+                    return;
+                }
+                
+                // Always check captcha (only check if field is not empty)
+                if (!captchaInput) {
+                    alert('Vui lòng nhập mã xác thực');
+                    return;
+                }
+                // Note: We don't validate captcha correctness here anymore
+                // Captcha will change after each attempt regardless of correctness
+                
+                // Check username format (no special characters)
+                const usernameRegex = /^[a-zA-Z0-9_]+$/;
+                if (!usernameRegex.test(username)) {
+                    alert('Tên đăng nhập không được chứa ký tự đặc biệt');
+                    return;
+                }
+                
+                // Check password length (minimum 6 characters)
+                if (password.length < 6) {
+                    alert('Mật khẩu phải có ít nhất 6 ký tự');
+                    return;
+                }
+                
+                // Save credentials if remember me is checked
+                if (rememberMe) {
+                    saveCredentials(username, password);
+                } else {
+                    clearSavedCredentials();
+                }
+                
+                // Disable button and show loading
+                loginBtn.disabled = true;
+                loginBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Đang đăng nhập...';
+                
+                try {
+                    const response = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            username: username,
+                            password: password,
+                            captchaCode: captchaInput,
+                            captchaId: window.currentCaptchaId || null
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        // Store tokens
+                        localStorage.setItem('accessToken', data.accessToken);
+                        localStorage.setItem('refreshToken', data.refreshToken);
+                        const cookieBase = `accessToken=${data.accessToken}; Path=/; Max-Age=3600; SameSite=Lax`;
+                        document.cookie = (location.protocol === 'https:' ? `${cookieBase}; Secure` : cookieBase);
+                        
+                        // Show success message
+                        alert('Đăng nhập thành công!');
+                        
+                        // Check user role and redirect accordingly
+                        try {
+                            const userResponse = await fetch('/api/auth/me');
+                            if (userResponse.ok) {
+                                const userData = await userResponse.json();
+                                if (userData.role === 'ADMIN') {
+                                    window.location.href = '/admin';
+                                } else {
+                                    window.location.href = '/';
+                                }
+                            } else {
+                                window.location.href = '/';
+                            }
+                        } catch (error) {
+                            window.location.href = '/';
+                        }
+                    } else {
+                        // Handle different error types based on status code
+                        if (response.status === 400) {
+                            // Captcha errors (400 status)
+                            if (data.message && data.message.includes('captcha')) {
+                                showCaptcha();
+                                
+                                if (data.message.includes('incorrect')) {
+                                    alert('Mã xác thực không đúng, vui lòng nhập lại!');
+                                } else if (data.message.includes('required')) {
+                                    alert('Vui lòng nhập mã xác thực!');
+                                } else {
+                                    alert('Mã xác thực không hợp lệ, vui lòng làm mới trang!');
+                                }
+                                
+                                // Update captcha with new one from backend if provided
+                                if (data.captcha) {
+                                    updateCaptchaFromBackend(data.captcha);
+                                } else {
+                                    loadCaptchaFromBackend();
+                                }
+                            } else {
+                                // Other 400 errors
+                                alert(data.error || 'Lỗi dữ liệu đầu vào!');
+                                loadCaptchaFromBackend();
+                            }
+                        } else if (response.status === 401) {
+                            // Authentication errors (401 status) - username/password wrong
+                            alert(data.error || 'Tài khoản hoặc mật khẩu không đúng!');
+                            
+                            // Use new captcha from backend response if available
+                            if (data.captcha) {
+                                updateCaptchaFromBackend(data.captcha);
+                            } else {
+                                loadCaptchaFromBackend();
+                            }
+                        } else {
+                            // Other errors
+                            alert(data.error || 'Có lỗi xảy ra!');
+                            loadCaptchaFromBackend();
+                        }
+                    }
+                } catch (error) {
+                    alert('Tài khoản hoặc mật khẩu không đúng!');
+                    // Generate new captcha on any error
+                    loadCaptchaFromBackend();
+                } finally {
+                    // Re-enable button
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket me-2"></i>Đăng nhập';
+                    
+                    // Always regenerate captcha after each attempt
+                    loadCaptchaFromBackend();
+                    document.getElementById('captcha').value = '';
+                }
+            });
+            
+            function loadSavedCredentials() {
+                const savedUsername = localStorage.getItem('savedUsername');
+                const savedPassword = localStorage.getItem('savedPassword');
+                const rememberMe = localStorage.getItem('rememberMe') === 'true';
+                
+                if (savedUsername && rememberMe) {
+                    document.getElementById('username').value = savedUsername;
+                    document.getElementById('password').value = savedPassword;
+                    document.getElementById('rememberMe').checked = true;
+                }
+            }
+            
+            function saveCredentials(username, password) {
+                localStorage.setItem('savedUsername', username);
+                localStorage.setItem('savedPassword', password);
+                localStorage.setItem('rememberMe', 'true');
+            }
+            
+            function clearSavedCredentials() {
+                localStorage.removeItem('savedUsername');
+                localStorage.removeItem('savedPassword');
+                localStorage.removeItem('rememberMe');
+            }
+            
+            function showAlert(message, type) {
+                // Remove existing alerts
+                const existingAlerts = document.querySelectorAll('.alert');
+                existingAlerts.forEach(alert => alert.remove());
+                
+                // Create new alert
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+                alertDiv.role = 'alert';
+                alertDiv.innerHTML = `
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                
+                // Insert at the top of the card
+                const card = document.querySelector('.card');
+                card.insertBefore(alertDiv, card.firstChild);
+            }
+            
+            // Captcha functions
+            function initializeCaptcha() {
+                const canvas = document.getElementById('captchaCanvas');
+                if (canvas) {
+                    canvas.addEventListener('click', generateCaptcha);
+                    generateCaptcha();
+                }
+            }
+            
+            function generateCaptcha() {
+                console.log('Generating captcha...');
+                // Get captcha from backend
+                fetch('/api/auth/captcha/simple')
+                    .then(response => {
+                        console.log('Captcha response status:', response.status);
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Captcha data received:', data);
+                        if (data.captchaId && data.captchaText) {
+                            // Store captcha data globally
+                            window.currentCaptchaId = data.captchaId;
+                            window.currentCaptchaAnswer = data.captchaText;
+                            
+                            // Draw captcha on canvas
+                            drawCaptchaOnCanvas(data.captchaText);
+                            console.log('Captcha generated successfully');
+                        } else {
+                            throw new Error('Invalid captcha response from server');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error getting captcha from backend:', error);
+                        alert('Không thể tải captcha. Vui lòng làm mới trang.');
+                        // Show error message but don't allow fallback
+                    });
+            }
+            
+            
+            function drawCaptchaOnCanvas(captchaText) {
+                const canvas = document.getElementById('captchaCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw background
+                ctx.fillStyle = '#f0f0f0';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw text
+                ctx.font = '20px Arial';
+                ctx.fillStyle = '#333';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Add some distortion
+                for (let i = 0; i < captchaText.length; i++) {
+                    const x = 20 + i * 20;
+                    const y = 20 + Math.sin(i) * 5;
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.rotate(Math.random() * 0.4 - 0.2);
+                    ctx.fillText(captchaText[i], 0, 0);
+                    ctx.restore();
+                }
+                
+                // Add some noise lines
+                for (let i = 0; i < 3; i++) {
+                    ctx.strokeStyle = '#999';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+                    ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+                    ctx.stroke();
+                }
+            }
+            
+            function showCaptcha() {
+                const captchaSection = document.getElementById('captchaSection');
+                if (captchaSection) {
+                    captchaSection.style.display = 'block';
+                    generateCaptcha();
+                }
+            }
+            
+            function hideCaptcha() {
+                const captchaSection = document.getElementById('captchaSection');
+                if (captchaSection) {
+                    captchaSection.style.display = 'none';
+                    document.getElementById('captcha').value = '';
+                }
+            }
+            
+            function updateCaptchaFromBackend(captchaData) {
+                // Update captcha with data from backend
+                if (captchaData && (captchaData.text || captchaData.captchaText)) {
+                    // Store the correct answer (support both formats)
+                    const captchaText = captchaData.text || captchaData.captchaText;
+                    window.currentCaptchaAnswer = captchaText;
+                    
+                    // Store captcha ID if available
+                    if (captchaData.captchaId) {
+                        window.currentCaptchaId = captchaData.captchaId;
+                    }
+                    
+                    // Update the canvas with new captcha
+                    const canvas = document.getElementById('captchaCanvas');
+                    if (canvas) {
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = 120;
+                        canvas.height = 40;
+                        
+                        // Clear canvas
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        
+                        // Set background
+                        ctx.fillStyle = '#f8f9fa';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        
+                        // Draw captcha text
+                        ctx.font = '20px Arial';
+                        ctx.fillStyle = '#333';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        
+                        // Add some rotation and distortion
+                        for (let i = 0; i < captchaText.length; i++) {
+                            ctx.save();
+                            ctx.translate(20 + i * 20, 20);
+                            ctx.rotate((Math.random() - 0.5) * 0.4);
+                            ctx.fillText(captchaText[i], 0, 0);
+                            ctx.restore();
+                        }
+                        
+                        // Add some noise lines
+                        for (let i = 0; i < 3; i++) {
+                            ctx.strokeStyle = '#999';
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+                            ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</head>
+<body>
+<main class="auth-page">
+    <div class="auth-left">
+        <div class="auth-logo">
+            <i class="fa-solid fa-cart-shopping"></i>
+        </div>
+        <div class="auth-brand">
+            <h1>License Shop</h1>
+            <p>Chào mừng bạn quay trở lại!</p>
+        </div>
+    </div>
+    
+    <div class="auth-right">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <h1 class="login-title">Đăng nhập</h1>
+                    <p class="login-subtitle">Điền thông tin để tiếp tục</p>
+                </div>
+            
+            <div th:if="${param.error}" class="alert alert-danger" role="alert">Tên đăng nhập hoặc mật khẩu không đúng</div>
+            <div th:if="${param.required}" class="alert alert-warning" role="alert">Vui lòng đăng nhập!</div>
+            <div th:if="${param.logout}" class="alert alert-success" role="alert">
+                <i class="fas fa-check-circle me-2"></i>Đăng xuất thành công!
+            </div>
+            <div th:if="${param.error == 'logout_failed'}" class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>Có lỗi xảy ra khi đăng xuất!
+            </div>
+            
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Tên đăng nhập</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+                        <input type="text" class="form-control" id="username" name="username" placeholder="username" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Mật khẩu</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                        <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
+                    </div>
+                </div>
+                <!-- Captcha Section -->
+                <div class="mb-3" id="captchaSection" style="display: none;">
+                    <label for="captcha" class="form-label">Mã xác thực <span class="text-danger">*</span></label>
+                    <div class="row">
+                        <div class="col-8">
+                            <input type="text" class="form-control" id="captcha" name="captcha" placeholder="Nhập mã xác thực" required>
+                        </div>
+                        <div class="col-4">
+                            <div class="captcha-container">
+                                <canvas id="captchaCanvas" width="120" height="40" style="border: 1px solid #ddd; border-radius: 4px; cursor: pointer;" title="Click để làm mới"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-text">
+                        <small class="text-muted">Click vào hình để làm mới mã xác thực</small>
+                    </div>
+                </div>
+                
+                <div class="mb-3 d-flex justify-content-between align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="rememberMe" name="rememberMe">
+                        <label class="form-check-label" for="rememberMe">
+                            Lưu mật khẩu
+                        </label>
+                    </div>
+                    <a class="link-primary text-decoration-none" th:href="@{/forgot-password}" href="/forgot-password">Quên mật khẩu?</a>
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary" id="loginBtn">
+                        <i class="fa-solid fa-right-to-bracket me-2"></i>Đăng nhập
+                    </button>
+                </div>
+            </form>
+            
+            <div class="divider">
+                <span>hoặc</span>
+            </div>
+            
+            <a href="/oauth2/authorization/google" class="google-btn">
+                <i class="fab fa-google" style="color: #dc3545;"></i>
+                Đăng nhập với Google
+            </a>
+            
+                <div class="footer-links">
+                    <div>
+                        <span class="text-muted">Chưa có tài khoản?</span>
+                        <a th:href="@{/register}" href="/register" class="link-primary">Đăng ký</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="border-top py-3">
+    <div class="container d-flex justify-content-between align-items-center small">
+        <div>© <span th:text="${#temporals.format(#temporals.createNow(),'yyyy')}">2025</span> License Shop</div>
+        <div class="text-muted">Liên hệ: support@example.com</div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/auth.js"></script>
+</body>
+</html>
+
+

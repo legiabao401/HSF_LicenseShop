@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="base_url" content="/">
+    <title>Thông tin cá nhân</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        .profile-card {
+            border: 1px solid #e9ecef;
+            border-radius: 0.75rem;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .profile-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+        }
+        .profile-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: #ffffff; /* solid blue header band */
+            z-index: 1;
+        }
+        .profile-card .card-body {
+            position: relative;
+            z-index: 2;
+        }
+        .profile-card .avatar-in-shadow {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.6);
+            z-index: 3;
+        }
+        .info-item {
+            border-bottom: 2px solid #e9ecef;
+            padding: 1.25rem 0;
+        }
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        .info-value {
+            font-size: 1.1rem;
+            color: #212529;
+        }
+        
+        /* Activity Timeline Styles */
+        .activity-timeline {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .activity-item {
+            transition: background-color 0.2s;
+        }
+        .activity-item:hover {
+            background-color: #f8f9fa;
+        }
+        .activity-item:last-child {
+            border-bottom: none !important;
+        }
+        .activity-icon-small {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+        }
+        .activity-content {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .activity-meta {
+            min-width: 80px;
+        }
+        
+        /* Profile activity styles */
+        .activity-header {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #495057;
+        }
+        .activity-item {
+            font-size: 0.85rem;
+        }
+        .activity-icon-small {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+        }
+        .activity-icon-small.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .activity-icon-small.failure {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .avatar-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 0.75rem 0.75rem 0 0;
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+        }
+        .stats-card.success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .stats-card.warning {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+        .stats-card.info {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        
+        /* Email row vertical layout */
+        .email-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .email-row .info-label { 
+            margin-bottom: 0; 
+            color: black; 
+            font-weight: 600;
+        }
+        .email-row .info-value { 
+            margin-bottom: 0; 
+            padding-left: 0;
+        }
+        
+        /* Fixed circular crop frame */
+        .circle-crop-frame {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid #0d6efd;
+            position: relative;
+            display: inline-block;
+            background: #e9f2ff;
+        }
+        .crop-instructions {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center me-2" th:href="@{/}" href="/">
+            <i class="fa-solid fa-cart-shopping me-2 text-primary"></i>
+            License Shop
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div id="nav" class="collapse navbar-collapse d-flex align-items-center">
+            <div class="flex-grow-1 mx-lg-3 d-none d-lg-block">
+                <form role="search" th:action="@{/products}" method="get">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="q" placeholder="Tìm kiếm tên gian hàng...">
+                        <button class="btn btn-primary" type="submit" aria-label="Tìm kiếm"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="d-none d-lg-flex align-items-center gap-2 ms-auto">
+                <div th:if="${!isAuthenticated}" class="d-flex align-items-center gap-2">
+                    <a class="btn btn-outline-secondary d-flex align-items-center gap-2" th:href="@{/login}" href="/login">
+                        <i class="fa-regular fa-user"></i>
+                        <span>Đăng nhập</span>
+                    </a>
+                    <a class="btn btn-outline-danger d-flex align-items-center gap-2" th:href="@{/cart}" href="/cart" aria-label="Giỏ hàng">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span>Giỏ hàng</span>
+                    </a>
+                </div>
+
+                <div th:if="${isAuthenticated}" class="d-flex align-items-center gap-2">
+                    <div class="btn btn-outline-success d-flex align-items-center gap-2" onclick="location.href='/payment'">
+                        <i class="fa-solid fa-wallet"></i>
+                        <span class="fw-bold" th:text="${#numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT')}">0</span>
+                    </div>
+
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img th:src="@{/api/profile/avatar/me}" 
+                                 class="rounded-circle" 
+                                 style="width: 24px; height: 24px; object-fit: cover;"
+                                 alt="Avatar"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                            <i class="fa-solid fa-user" style="display: none;"></i>
+                            <span th:text="${username}">User</span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" th:href="@{/profile}" href="/profile"><i class="fa-solid fa-user me-2"></i>Thông tin cá nhân</a></li>
+                            <li><a class="dropdown-item" th:href="@{/orders}" href="/orders"><i class="fa-solid fa-shopping-bag me-2"></i>Đơn hàng</a></li>
+                            <li th:if="${userRole == 'ADMIN'}"><a class="dropdown-item" th:href="@{/admin}" href="/admin"><i class="fa-solid fa-cogs me-2"></i>Quản lý</a></li>
+                            <li th:if="${userRole == 'SELLER'}"><a class="dropdown-item" th:href="@{/seller/stall-management}" href="/seller/stall-management"><i class="fa-solid fa-store me-2"></i>Quản lí gian hàng</a></li>
+                            <li th:if="${userRole == 'SELLER'}"><a class="dropdown-item" th:href="@{/withdraw}" href="/withdraw"><i class="fa-solid fa-money-bill-transfer me-2"></i>Rút tiền</a></li>
+                            <li><a class="dropdown-item" th:href="@{/payment-history}" href="/payment-history"><i class="fa-solid fa-credit-card me-2"></i>Lịch sử thanh toán</a></li>
+                            <li><a class="dropdown-item" th:href="@{/change-password}" href="/change-password"><i class="fa-solid fa-key me-2"></i>Đổi mật khẩu</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fa-solid fa-heart me-2"></i>Yêu thích</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="window.authManager.logout(); return false;"><i class="fa-solid fa-right-from-bracket me-2"></i>Đăng xuất</a></li>
+                        </ul>
+                    </div>
+
+                    <a class="btn btn-outline-secondary d-flex align-items-center gap-2" href="#" aria-label="Tin nhắn">
+                        <i class="fa-solid fa-message"></i>
+                        <span>Tin nhắn</span>
+                    </a>
+
+                    <a class="btn btn-outline-danger d-flex align-items-center gap-2" th:href="@{/cart}" href="/cart" aria-label="Giỏ hàng">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span>Giỏ hàng</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<main class="container py-4 py-md-5">
+    <!-- Flash Messages -->
+    <div th:if="${infoRequired}" class="alert alert-warning alert-dismissible fade show" role="alert">
+        <i class="fa-solid fa-exclamation-triangle me-2"></i>
+        <span th:text="${infoRequired}">Thông báo</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h4 mb-1">Thông tin cá nhân</h1>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Profile Information -->
+        <div class="col-lg-8">
+            <div class="card profile-card">
+                <div class="card-body">
+                    <div class="info-item email-row">
+                        <div class="info-label">
+                            <i class="fa-solid fa-envelope me-2"></i>Email
+                        </div>
+                        <div class="info-value" data-email="${user?.email}">
+                            <span th:if="${user?.email}" th:text="${user.email}"></span>
+                            <span th:unless="${user?.email}" class="text-muted">Chưa cập nhật</span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fa-solid fa-id-card me-2 text-primary"></i>Họ và tên
+                        </div>
+                        <div class="info-value" data-fullname="${user?.fullName}">
+                            <span th:if="${user?.fullName}" th:text="${user.fullName}"></span>
+                            <span th:unless="${user?.fullName}" class="text-muted">Chưa cập nhật</span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fa-solid fa-phone me-2 text-primary"></i>Số điện thoại
+                        </div>
+                        <div class="info-value" data-phone="${user?.phone}">
+                            <span th:if="${user?.phone}" th:text="${user.phone}"></span>
+                            <span th:unless="${user?.phone}" class="text-muted">Chưa cập nhật</span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fa-solid fa-user-tag me-2 text-info"></i>Tên đăng nhập
+                        </div>
+                        <div class="info-value" th:text="${user?.username ?: 'Chưa cập nhật'}">
+                            <span th:if="${user?.username}" th:text="${user.username}"></span>
+                            <span th:unless="${user?.username}" class="text-muted">Chưa cập nhật</span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fa-solid fa-shield-halved me-2 text-warning"></i>Vai trò
+                        </div>
+                        <div class="info-value">
+                            <span th:if="${user?.role}" th:text="${user.role}" class="badge bg-primary"></span>
+                            <span th:unless="${user?.role}" class="text-muted">Chưa cập nhật</span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fa-solid fa-circle-check me-2 text-success"></i>Trạng thái
+                        </div>
+                        <div class="info-value">
+                            <span th:if="${user?.status}" th:text="${user.status}" class="badge bg-success"></span>
+                            <span th:unless="${user?.status}" class="text-muted">Chưa cập nhật</span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fa-solid fa-wallet me-2 text-success"></i>Số dư
+                        </div>
+                        <div class="info-value text-success fw-bold">
+                            <span th:text="${#numbers.formatDecimal(walletBalance, 0, 'COMMA', 0, 'POINT')}">0</span> VNĐ
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fa-solid fa-calendar-plus me-2 text-info"></i>Ngày đăng ký
+                        </div>
+                        <div class="info-value" th:text="${#temporals.format(userCreatedAt, 'dd/MM/yyyy HH:mm')}">Loading...</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">
+                            <i class="fa-solid fa-shopping-cart me-2 text-warning"></i>Đơn đã mua
+                        </div>
+                        <div class="info-value" th:text="${totalOrders} + ' đơn hàng'">Loading...</div>
+                    </div>
+                    <div class="info-item" th:if="${userRole == 'ADMIN'}">
+                        <div class="info-label">
+                            <i class="fa-solid fa-store me-2 text-info"></i>Số gian hàng
+                        </div>
+                        <div class="info-value" id="profileTotalShops">Loading...</div>
+                    </div>
+                    <div class="info-item" th:if="${userRole == 'ADMIN'}">
+                        <div class="info-label">
+                            <i class="fa-solid fa-chart-line me-2 text-success"></i>Đơn đã bán
+                        </div>
+                        <div class="info-value" id="profileTotalSales">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Avatar Card -->
+        <div class="col-lg-4">
+            <div class="card profile-card">
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <div class="position-relative d-inline-block mb-3">
+                            <img th:src="@{/api/profile/avatar/me}" 
+                                 class="rounded-circle border border-2 border-primary" 
+                                 style="width: 100px; height: 100px; object-fit: cover;"
+                                 alt="Avatar"
+                                 id="profileAvatar"
+                                 onerror="this.src='/images/default-avatar.svg'">
+                            <button class="btn btn-sm btn-primary position-absolute bottom-0 end-0 rounded-circle" 
+                                    style="width: 30px; height: 30px; padding: 0;"
+                                    data-bs-toggle="modal" data-bs-target="#avatarModal"
+                                    title="Thay đổi avatar">
+                                <i class="fa-solid fa-camera fa-xs"></i>
+                            </button>
+                        </div>
+                        <h4 class="mb-1" th:text="${user.username}" data-username="${user.username}">Username</h4>
+                        <p class="text-muted mb-0" th:text="${userRole}">USER</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Activity History Card -->
+            <div class="card profile-card mt-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fa-solid fa-clock-rotate-left me-2"></i>Lịch sử hoạt động
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div th:if="${recentActivities != null and !recentActivities.empty}" class="activity-timeline">
+                        <!-- Header for profile activities -->
+                        <div class="activity-header d-flex align-items-center py-2 border-bottom bg-light">
+                            <div class="col-3">
+                                <strong class="small">Hoạt động</strong>
+                            </div>
+                            <div class="col-4">
+                                <strong class="small">Chi tiết</strong>
+                            </div>
+                            <div class="col-3">
+                                <strong class="small">Thời gian</strong>
+                            </div>
+                            <div class="col-2">
+                                <strong class="small">Trạng thái</strong>
+                            </div>
+                        </div>
+                        
+                        <div th:each="activity : ${recentActivities}" class="activity-item d-flex align-items-center py-2 border-bottom">
+                            <!-- Hoạt động -->
+                            <div class="col-3">
+                                <span class="fw-semibold small" th:text="${activity.actionDisplayName}">Hoạt động</span>
+                            </div>
+                            
+                            <!-- Chi tiết -->
+                            <div class="col-4">
+                                <span class="text-muted small">
+                                    <span th:if="${activity.success}" class="text-success">Thành công</span>
+                                    <span th:unless="${activity.success}" class="text-danger">Thất bại</span>
+                                </span>
+                                <div th:if="${!activity.success and activity.failureReason}" class="mt-1">
+                                    <span class="badge bg-danger" style="font-size: 0.7rem;" th:text="${activity.failureReason}">Lỗi</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Thời gian -->
+                            <div class="col-3">
+                                <div class="small text-muted" th:text="${#temporals.format(activity.createdAt, 'dd/MM HH:mm')}">Thời gian</div>
+                            </div>
+                            
+                            <!-- Trạng thái -->
+                            <div class="col-2">
+                                <div class="d-flex align-items-center">
+                                    <div th:class="'activity-icon-small me-1 ' + (${activity.success} ? 'success' : 'failure')">
+                                        <i th:class="${activity.successIcon}" class="fa-xs"></i>
+                                    </div>
+                                    <span th:class="${activity.success} ? 'text-success' : 'text-danger'" 
+                                          th:text="${activity.success} ? 'OK' : 'Lỗi'" 
+                                          class="small">Trạng thái</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${recentActivities == null or recentActivities.empty}" class="text-center p-4">
+                        <i class="fa-solid fa-inbox fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">Chưa có hoạt động nào</p>
+                    </div>
+                    <div class="card-footer bg-light text-center">
+                        <a href="#" class="btn btn-outline-primary btn-sm" onclick="showAllActivities()">
+                            <i class="fa-solid fa-list me-1"></i>Xem tất cả
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Button -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-center">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                    <i class="fa-solid fa-edit me-2"></i>Chỉnh sửa thông tin
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Avatar Upload Modal -->
+<div class="modal fade" id="avatarModal" tabindex="-1" aria-labelledby="avatarModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="avatarModalLabel">
+                    <i class="fa-solid fa-camera me-2"></i>Thay đổi avatar
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="avatarForm" enctype="multipart/form-data">
+                    <div class="text-center mb-3">
+                        <div class="circle-crop-frame" id="cropFrame">
+                            <img id="avatarPreview" 
+                                 th:src="@{/api/profile/avatar/me}" 
+                                 style="width: 100%; height: 100%; object-fit: cover; position: relative;"
+                                 alt="Avatar Preview"
+                                 onerror="this.src='/images/default-avatar.svg'">
+                        </div>
+                        <div class="crop-instructions d-none" id="cropHint">
+                            Kéo ảnh bên trong khung tròn để chọn vị trí bạn thích.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="avatarFile" class="form-label">Chọn ảnh avatar</label>
+                        <input type="file" class="form-control" id="avatarFile" name="file" 
+                               accept="image/jpeg,image/png,image/gif" required>
+                        <div class="form-text">
+                            Định dạng: JPG, PNG, GIF. Kích thước tối đa: 2MB
+                        </div>
+                        <div class="invalid-feedback" id="avatarError"></div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-danger flex-fill" onclick="deleteAvatar()">
+                            <i class="fa-solid fa-trash me-1"></i>Xóa avatar
+                        </button>
+                        <button type="button" class="btn btn-warning flex-fill" onclick="toggleCropMode()" id="cropToggleBtn">
+                            <i class="fa-solid fa-crop me-1"></i>Cắt chỉnh
+                        </button>
+                        <button type="submit" class="btn btn-primary flex-fill">
+                            <i class="fa-solid fa-upload me-1"></i>Upload
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProfileModalLabel">
+                    <i class="fa-solid fa-edit me-2"></i>Chỉnh sửa thông tin cá nhân
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProfileForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="editUsername" class="form-label">Tài khoản</label>
+                            <input type="text" class="form-control" id="editUsername" readonly th:value="${username}">
+                            <div class="form-text">Tài khoản không thể thay đổi</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail" readonly th:value="${user?.email}">
+                            <div class="form-text">Email không thể thay đổi</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editFullName" class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editFullName" required th:value="${user?.fullName}"
+                                   pattern="^[\p{L}\s]{2,50}$"
+                                   title="Họ và tên phải có từ 2-50 ký tự, chỉ chứa chữ cái và khoảng trắng">
+                            <div class="invalid-feedback" id="fullNameError"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editPhone" class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="editPhone" required th:value="${user?.phone}"
+                                   pattern="^(0|\+84)[35789][0-9]{8}$"
+                                   title="Số điện thoại phải bắt đầu bằng 0 hoặc +84, theo sau là 3,5,7,8,9 và 8 chữ số">
+                            <div class="invalid-feedback" id="phoneError"></div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="updateProfile()">
+                    <i class="fa-solid fa-save me-2"></i>Lưu thay đổi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="border-top py-3 mt-5">
+    <div class="container d-flex justify-content-between align-items-center small">
+        <div>© <span th:text="${#temporals.format(#temporals.createNow(),'yyyy')}">2025</span> License Shop</div>
+        <div class="text-muted">Liên hệ: support@example.com</div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/auth.js"></script>
+<script>
+    let currentProfile = null;
+    
+    // Profile data is now loaded via server-side Thymeleaf
+    // No need for client-side loading
+    
+    // Profile display is now handled by server-side Thymeleaf
+    // No need for client-side updates
+    
+    // Populate edit form with server-side data
+    function populateEditForm() {
+        // Get data from Thymeleaf attributes
+        const usernameElement = document.querySelector('[data-username]');
+        const emailElement = document.querySelector('[data-email]');
+        const fullNameElement = document.querySelector('[data-fullname]');
+        const phoneElement = document.querySelector('[data-phone]');
+        
+        const normalize = (val) => {
+            if (!val) return '';
+            const s = String(val).trim();
+            // If Thymeleaf didn't evaluate and left an expression like ${...}
+            if (s.startsWith('${') && s.endsWith('}')) return '';
+            return s;
+        };
+
+        const username = normalize(usernameElement?.dataset.username) || normalize(usernameElement?.textContent);
+        const email = normalize(emailElement?.dataset.email) || normalize(emailElement?.textContent);
+        const fullName = normalize(fullNameElement?.dataset.fullname) || normalize(fullNameElement?.textContent);
+        const phone = normalize(phoneElement?.dataset.phone) || normalize(phoneElement?.textContent);
+        
+        console.log('Data attributes:', {
+            username: usernameElement?.dataset.username,
+            email: emailElement?.dataset.email,
+            fullName: fullNameElement?.dataset.fullname,
+            phone: phoneElement?.dataset.phone
+        });
+        
+        // Only populate if values are not already set by Thymeleaf
+        if (!document.getElementById('editUsername').value) {
+            document.getElementById('editUsername').value = username;
+        }
+        const editEmail = document.getElementById('editEmail');
+        const editFullName = document.getElementById('editFullName');
+        const editPhone = document.getElementById('editPhone');
+
+        if (!editEmail.value) editEmail.value = email || '';
+        if (!editFullName.value) editFullName.value = fullName || '';
+        if (!editPhone.value) editPhone.value = phone || '';
+
+        // Set helpful placeholders when empty
+        if (!editFullName.value) editFullName.placeholder = 'Chưa cập nhật';
+        if (!editPhone.value) editPhone.placeholder = 'Chưa cập nhật';
+        
+        console.log('Form populated:', { username, email, fullName, phone });
+    }
+    
+    // Update profile
+    async function updateProfile() {
+        try {
+            // Try multiple ways to get the token
+            let token = null;
+            if (window.authManager) {
+                token = window.authManager.getAccessToken();
+            }
+            
+            if (!token) {
+                token = localStorage.getItem('accessToken');
+            }
+            
+            if (!token) {
+                // Try to get from cookie as fallback
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name === 'accessToken' && value) {
+                        token = value;
+                        break;
+                    }
+                }
+            }
+            
+            if (!token) {
+                console.error('No access token found in localStorage, authManager, or cookies');
+                throw new Error('No access token found');
+            }
+            
+            // Clear previous validation errors
+            clearValidationErrors();
+            
+            const fullName = document.getElementById('editFullName').value.trim();
+            const phone = document.getElementById('editPhone').value.trim();
+            
+            // Validate full name (only if provided)
+            if (fullName) {
+                const fullNameRegex = /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼẾỀỂỄỆỈĨỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪỬỮỰỲỴÝỶỸĐăạảấầẩẫậắằẳẵặẹẻẽếềểễệỉĩịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹđ\s]{2,50}$/;
+                if (!fullNameRegex.test(fullName)) {
+                    showFieldError('editFullName', 'Họ và tên phải có từ 2-50 ký tự, chỉ chứa chữ cái và khoảng trắng');
+                    return;
+                }
+            }
+            
+            // Validate phone (only if provided)
+            if (phone) {
+                const phoneRegex = /^(0|\+84)[35789][0-9]{8}$/;
+                if (!phoneRegex.test(phone)) {
+                    showFieldError('editPhone', 'Số điện thoại phải bắt đầu bằng 0 hoặc +84, theo sau là 3,5,7,8,9 và 8 chữ số');
+                    return;
+                }
+            }
+            
+            // At least one field must be provided
+            if (!fullName && !phone) {
+                showError('Vui lòng nhập ít nhất một trường để cập nhật');
+                return;
+            }
+            
+            const updateData = {
+                fullName: fullName,
+                phone: phone
+            };
+            
+            const response = await fetch('/api/profile', {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updateData)
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: 'Có lỗi xảy ra' }));
+                throw new Error(errorData.message || 'Failed to update profile');
+            }
+            
+            const result = await response.json();
+            if (result.success) {
+                currentProfile = result.data;
+                showSuccess('Thông tin đã được cập nhật thành công!');
+                
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
+                modal.hide();
+                
+                // Reload page to show updated data
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                throw new Error(result.message || 'Failed to update profile');
+            }
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            showError('Không thể cập nhật thông tin: ' + error.message);
+        }
+    }
+    
+    // Clear validation errors
+    function clearValidationErrors() {
+        document.getElementById('editFullName').classList.remove('is-invalid');
+        document.getElementById('editPhone').classList.remove('is-invalid');
+        document.getElementById('fullNameError').textContent = '';
+        document.getElementById('phoneError').textContent = '';
+    }
+    
+    // Show field error
+    function showFieldError(fieldId, message) {
+        const field = document.getElementById(fieldId);
+        let errorElementId = fieldId + 'Error';
+        
+        // Handle special cases for edit form fields
+        if (fieldId === 'editFullName') {
+            errorElementId = 'fullNameError';
+        } else if (fieldId === 'editPhone') {
+            errorElementId = 'phoneError';
+        }
+        
+        const errorElement = document.getElementById(errorElementId);
+        if (field) {
+            field.classList.add('is-invalid');
+        }
+        if (errorElement) {
+            errorElement.textContent = message;
+        } else {
+            console.error('Error element not found:', errorElementId);
+        }
+    }
+    
+    // Utility functions
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).format(amount);
+    }
+    
+    function formatDate(dateString) {
+        if (!dateString) return 'Chưa cập nhật';
+        return new Date(dateString).toLocaleDateString('vi-VN');
+    }
+    
+    function showSuccess(message) {
+        // You can implement a toast notification here
+        alert(message);
+    }
+    
+    function showError(message) {
+        // You can implement a toast notification here
+        alert(message);
+    }
+    
+    // Show all activities modal
+    function showAllActivities() {
+        window.location.href = '/activity-history';
+    }
+    
+    // Avatar management functions
+    let isCropMode = false;
+    let cropData = null;
+    
+    function previewAvatar(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewImg = document.getElementById('avatarPreview');
+                previewImg.src = e.target.result;
+                
+                // Reset crop mode when new image is loaded
+                exitCropMode();
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    
+    function toggleCropMode() {
+        const previewImg = document.getElementById('avatarPreview');
+        const cropButton = document.querySelector('button[onclick="toggleCropMode()"]');
+        
+        if (!isCropMode) {
+            enterCropMode();
+        } else {
+            exitCropMode();
+        }
+    }
+    
+    function enterCropMode() {
+        const previewImg = document.getElementById('avatarPreview');
+        const cropButton = document.getElementById('cropToggleBtn');
+        const cropHint = document.getElementById('cropHint');
+        
+        isCropMode = true;
+        cropButton.innerHTML = '<i class="fa-solid fa-check me-1"></i>Xong';
+        cropButton.classList.remove('btn-warning');
+        cropButton.classList.add('btn-success');
+        
+        // Show hint
+        cropHint.classList.remove('d-none');
+        
+        // Only allow dragging the image inside fixed circle
+        initializeCropHandlers();
+    }
+    
+    function exitCropMode() {
+        const cropButton = document.getElementById('cropToggleBtn');
+        const cropHint = document.getElementById('cropHint');
+        
+        isCropMode = false;
+        cropButton.innerHTML = '<i class="fa-solid fa-crop me-1"></i>Cắt chỉnh';
+        cropButton.classList.remove('btn-success');
+        cropButton.classList.add('btn-warning');
+        
+        // Hide hint
+        cropHint.classList.add('d-none');
+    }
+    
+    function initializeCropHandlers() {
+        const previewImg = document.getElementById('avatarPreview');
+        let isDragging = false;
+        let startX, startY, startLeft, startTop;
+        
+        // Make image draggable
+        previewImg.addEventListener('mousedown', function(e) {
+            if (!isCropMode) return;
+            
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            
+            const rect = previewImg.getBoundingClientRect();
+            startLeft = previewImg.offsetLeft;
+            startTop = previewImg.offsetTop;
+            
+            e.preventDefault();
+        });
+        
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging || !isCropMode) return;
+            
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+            
+            let newLeft = startLeft + deltaX;
+            let newTop = startTop + deltaY;
+            
+            // Constrain movement within the circle frame area
+            const frame = document.getElementById('cropFrame');
+            const frameRect = frame.getBoundingClientRect();
+            const imgRect = previewImg.getBoundingClientRect();
+            
+            previewImg.style.left = newLeft + 'px';
+            previewImg.style.top = newTop + 'px';
+            previewImg.style.position = 'relative';
+        });
+        
+        document.addEventListener('mouseup', function() {
+            isDragging = false;
+        });
+        
+        // No resize handles – fixed circle frame
+    }
+    
+    async function uploadAvatar() {
+        try {
+            const fileInput = document.getElementById('avatarFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showFieldError('avatarFile', 'Vui lòng chọn file ảnh');
+                return;
+            }
+            
+            // Validate file size (2MB max)
+            if (file.size > 2 * 1024 * 1024) {
+                showFieldError('avatarFile', 'File không được vượt quá 2MB');
+                return;
+            }
+            
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                showFieldError('avatarFile', 'Chỉ chấp nhận file JPG, PNG, GIF');
+                return;
+            }
+            
+            // Try multiple ways to get the token
+            let token = null;
+            if (window.authManager) {
+                token = window.authManager.getAccessToken();
+            }
+            
+            if (!token) {
+                token = localStorage.getItem('accessToken');
+            }
+            
+            if (!token) {
+                // Try to get from cookie as fallback
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name === 'accessToken' && value) {
+                        token = value;
+                        break;
+                    }
+                }
+            }
+            
+            if (!token) {
+                console.error('No access token found in localStorage, authManager, or cookies');
+                throw new Error('No access token found');
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            const response = await fetch('/api/profile/avatar', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: 'Có lỗi xảy ra' }));
+                throw new Error(errorData.error || 'Failed to upload avatar');
+            }
+            
+            const result = await response.json();
+            console.log('Upload response:', result);
+            
+            if (result.success) {
+                showSuccess('Avatar đã được cập nhật thành công!');
+                
+                // Update avatar display immediately
+                const timestamp = Date.now();
+                const avatarImg = document.getElementById('profileAvatar');
+                if (avatarImg) {
+                    avatarImg.src = `/api/profile/avatar/me?t=${timestamp}`;
+                }
+                
+                // Update preview in modal
+                const previewImg = document.getElementById('avatarPreview');
+                if (previewImg) {
+                    previewImg.src = `/api/profile/avatar/me?t=${timestamp}`;
+                }
+                
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('avatarModal'));
+                modal.hide();
+                
+                // Reset form
+                document.getElementById('avatarForm').reset();
+                document.getElementById('avatarPreview').src = '/images/default-avatar.svg';
+                
+                // Reload page after a short delay to ensure avatar is saved
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                throw new Error(result.error || 'Failed to upload avatar');
+            }
+        } catch (error) {
+            console.error('Error uploading avatar:', error);
+            showError('Không thể upload avatar: ' + error.message);
+        }
+    }
+    
+    async function deleteAvatar() {
+        try {
+            if (!confirm('Bạn có chắc chắn muốn xóa avatar?')) {
+                return;
+            }
+            
+            // Try multiple ways to get the token
+            let token = null;
+            if (window.authManager) {
+                token = window.authManager.getAccessToken();
+            }
+            
+            if (!token) {
+                token = localStorage.getItem('accessToken');
+            }
+            
+            if (!token) {
+                // Try to get from cookie as fallback
+                const cookies = document.cookie.split(';');
+                for (let cookie of cookies) {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name === 'accessToken' && value) {
+                        token = value;
+                        break;
+                    }
+                }
+            }
+            
+            if (!token) {
+                console.error('No access token found in localStorage, authManager, or cookies');
+                throw new Error('No access token found');
+            }
+            
+            const response = await fetch('/api/profile/avatar', {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ error: 'Có lỗi xảy ra' }));
+                throw new Error(errorData.error || 'Failed to delete avatar');
+            }
+            
+            const result = await response.json();
+            console.log('Delete response:', result);
+            
+            if (result.success) {
+                showSuccess('Avatar đã được xóa thành công!');
+                
+                // Update avatar display to default
+                const avatarImg = document.getElementById('profileAvatar');
+                if (avatarImg) {
+                    const timestamp = Date.now();
+                    avatarImg.src = `/api/profile/avatar/me?t=${timestamp}`;
+                }
+                
+                // Update preview
+                document.getElementById('avatarPreview').src = '/images/default-avatar.svg';
+                
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('avatarModal'));
+                modal.hide();
+                
+                // Reset form
+                document.getElementById('avatarForm').reset();
+                
+                // Reload page after a short delay
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                throw new Error(result.error || 'Failed to delete avatar');
+            }
+        } catch (error) {
+            console.error('Error deleting avatar:', error);
+            showError('Không thể xóa avatar: ' + error.message);
+        }
+    }
+    
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Populate edit form when modal opens
+        const editModal = document.getElementById('editProfileModal');
+        if (editModal) {
+            editModal.addEventListener('show.bs.modal', function() {
+                populateEditForm();
+            });
+        }
+        
+        // Handle save button click
+        const saveButton = document.querySelector('#editProfileModal .btn-primary');
+        if (saveButton) {
+            saveButton.addEventListener('click', updateProfile);
+        }
+        
+        // Handle avatar form submission
+        const avatarForm = document.getElementById('avatarForm');
+        if (avatarForm) {
+            avatarForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                uploadAvatar();
+            });
+        }
+        
+        // Handle avatar file input change
+        const avatarFileInput = document.getElementById('avatarFile');
+        if (avatarFileInput) {
+            avatarFileInput.addEventListener('change', function(e) {
+                previewAvatar(e.target);
+            });
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chỉnh sửa gian hàng - License Shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 280px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            color: #333;
+            z-index: 1000;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            border-right: 1px solid rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-header .navbar-brand {
+            color: #0d6efd;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        
+        .sidebar-header .navbar-brand:hover {
+            color: #0b5ed7;
+        }
+        
+        .menu-section {
+            padding: 20px 0;
+        }
+        
+        .sidebar .section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 20px 10px;
+            margin-bottom: 10px;
+        }
+        
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #0d6efd;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+            margin: 2px 0;
+            font-weight: 500;
+        }
+        
+        .menu-item:hover {
+            background-color: rgba(13, 110, 253, 0.1);
+            color: #0b5ed7;
+            border-left-color: #0d6efd;
+            transform: translateX(5px);
+        }
+        
+        .menu-item.active {
+            background-color: rgba(13, 110, 253, 0.15);
+            color: #0b5ed7;
+            border-left-color: #0d6efd;
+            font-weight: 600;
+        }
+        
+        .menu-item i {
+            width: 20px;
+            margin-right: 12px;
+            font-size: 16px;
+        }
+        
+        .main-content {
+            margin-left: 280px;
+            padding: 0;
+            min-height: 100vh;
+        }
+        
+        .top-navbar {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .content-area {
+            padding: 30px;
+        }
+        
+        .page-header {
+            background: white;
+            border-radius: 12px;
+            padding: 18px 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .page-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0;
+        }
+        
+        .btn-back {
+            background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .btn-back:hover {
+            background: linear-gradient(135deg, #0b5ed7, #0a58ca);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+            color: white;
+        }
+        
+        .form-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        
+        .form-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .form-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 10px;
+            color: #0d6efd;
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+        
+        .form-control, .form-select {
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        }
+        
+        .form-control:read-only {
+            background-color: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+            border-color: #ced4da;
+        }
+        
+        .form-control:read-only:focus {
+            background-color: #e9ecef;
+            color: #6c757d;
+            border-color: #ced4da;
+            box-shadow: none;
+        }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-submit:hover {
+            background: linear-gradient(135deg, #0b5ed7, #0a58ca);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+            color: white;
+        }
+        
+        
+        .required {
+            color: #dc3545;
+        }
+        
+        .form-text {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        /* Cropper styles */
+        .cropper-container {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .cropped-preview-container {
+            text-align: center;
+        }
+        
+        .cropped-preview {
+            background-color: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .cropped-preview img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .cropper-container {
+                max-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="d-flex align-items-center justify-content-between">
+                <a class="navbar-brand d-flex align-items-center" th:href="@{/}" href="/">
+                    <i class="fa-solid fa-cart-shopping me-2 text-primary"></i>
+                    License Shop
+                </a>
+            </div>
+        </div>
+        
+        <div class="menu-section">
+            <div class="section-title">SALE</div>
+            <a href="/seller/gross-sales" class="menu-item">
+                <i class="fas fa-shopping-cart"></i>
+                Doanh số
+            </a>
+        </div>
+        
+        <div class="menu-section">
+            <div class="section-title">SHOP</div>
+            <a href="/seller/stall-management" class="menu-item">
+                <i class="fas fa-clipboard-list"></i>
+                Quản lý gian hàng
+            </a>
+            <a href="/seller/orders" class="menu-item">
+                <i class="fas fa-file-invoice-dollar"></i>
+                Đơn hàng sản phẩm
+            </a>
+            <a href="/seller/reviews" class="menu-item">
+                <i class="fas fa-comment"></i>
+                Đánh giá
+            </a>
+        </div>
+        
+        <div class="menu-section">
+            <div class="section-title">ADMIN</div>
+            <a href="/admin" class="menu-item">
+                <i class="fas fa-tachometer-alt"></i>
+                Dashboard
+            </a>
+            <a href="/admin/users" class="menu-item">
+                <i class="fas fa-users"></i>
+                Quản lý người dùng
+            </a>
+            <a href="/admin/stalls" class="menu-item">
+                <i class="fas fa-store"></i>
+                Quản lý cửa hàng
+            </a>
+            <a href="/admin/withdraw-requests" class="menu-item">
+                <i class="fas fa-money-bill-transfer"></i>
+                Yêu cầu rút tiền
+            </a>
+            <a href="/admin/audit-logs" class="menu-item">
+                <i class="fas fa-clipboard-list"></i>
+                Audit Logs
+            </a>
+            <a href="/admin/api-logs" class="menu-item">
+                <i class="fas fa-code"></i>
+                API Logs
+            </a>
+            <a href="/admin/user-activity-logs" class="menu-item">
+                <i class="fas fa-user-clock"></i>
+                User Activity Logs
+            </a>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navbar -->
+        <div class="top-navbar">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-outline-secondary me-3" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <div class="d-flex align-items-center gap-3">
+                <!-- Profile Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
+                        <i class="fa-solid fa-user"></i>
+                        <span th:text="${username}">User</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" th:href="@{/profile}" href="/profile"><i class="fa-solid fa-user me-2"></i>Thông tin cá nhân</a></li>
+                        <li><a class="dropdown-item" th:href="@{/orders}" href="/orders"><i class="fa-solid fa-shopping-bag me-2"></i>Đơn hàng</a></li>
+                        <li><a class="dropdown-item" th:href="@{/payment-history}" href="/payment-history"><i class="fa-solid fa-credit-card me-2"></i>Lịch sử thanh toán</a></li>
+                        <li><a class="dropdown-item" th:href="@{/change-password}" href="/change-password"><i class="fa-solid fa-key me-2"></i>Đổi mật khẩu</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fa-solid fa-heart me-2"></i>Yêu thích</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" th:href="@{/logout}" href="/logout"><i class="fa-solid fa-right-from-bracket me-2"></i>Đăng xuất</a></li>
+                    </ul>
+                </div>
+
+                <a class="btn btn-outline-secondary d-flex align-items-center gap-2" href="#" aria-label="Tin nhắn">
+                    <i class="fa-solid fa-message"></i>
+                    <span>Tin nhắn</span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Success/Error Messages -->
+            <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <span th:text="${successMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <span th:text="${errorMessage}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="page-title">Chỉnh sửa gian hàng</h1>
+                        <small class="text-muted" th:text="'Gian hàng: ' + ${stall.stallName}">Gian hàng: Tên gian hàng</small>
+                    </div>
+                    <a th:href="@{/seller/stall-management}" href="/seller/stall-management" class="btn-back">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Quay lại
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Form Container -->
+            <div class="form-container">
+                <form th:action="@{/seller/edit-stall/{id}(id=${stall.id})}" method="post" enctype="multipart/form-data" id="editStallForm">
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <h5 class="section-title">
+                            <i class="fas fa-info-circle"></i>
+                            Thông tin cơ bản
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="stallName" class="form-label">Tên gian hàng <span class="required">*</span></label>
+                                <input type="text" class="form-control" id="stallName" name="stallName" th:value="${stall.stallName}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="status" class="form-label">Trạng thái <span class="required">*</span></label>
+                                <select class="form-select" id="status" name="status" required th:disabled="${stall.status == 'REJECTED'}">
+                                    <option value="OPEN" th:selected="${stall.status == 'OPEN'}">Mở</option>
+                                    <option value="CLOSED" th:selected="${stall.status == 'CLOSED'}">Đóng</option>
+                                </select>
+                                <!-- Hidden input for REJECTED stalls to ensure PENDING status is submitted -->
+                                <input type="hidden" name="status" value="PENDING" th:if="${stall.status == 'REJECTED'}">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Loại hình kinh doanh</label>
+                                <input type="text" class="form-control" th:value="${stall.businessType}" readonly>
+                                <div class="form-text">Không thể thay đổi</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Loại gian hàng</label>
+                                <input type="text" class="form-control" th:value="${stall.stallCategory}" readonly>
+                                <div class="form-text">Không thể thay đổi</div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Chiết khấu</label>
+                                <input type="text" class="form-control" th:value="${stall.discountPercentage} + '%'" readonly>
+                                <div class="form-text">Không thể thay đổi</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="form-section">
+                        <h5 class="section-title">
+                            <i class="fas fa-align-left"></i>
+                            Mô tả gian hàng
+                        </h5>
+                        <div class="mb-3">
+                            <label for="shortDescription" class="form-label">Mô tả ngắn <span class="required">*</span></label>
+                            <textarea class="form-control" id="shortDescription" name="shortDescription" rows="3" required th:text="${stall.shortDescription}"></textarea>
+                            <div class="form-text">Mô tả ngắn gọn về gian hàng, sản phẩm chính</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="detailedDescription" class="form-label">Mô tả chi tiết <span class="required">*</span></label>
+                            <textarea class="form-control" id="detailedDescription" name="detailedDescription" rows="5" required th:text="${stall.detailedDescription}"></textarea>
+                            <div class="form-text">Mô tả chi tiết về gian hàng, dịch vụ, chính sách bán hàng</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Stall Image -->
+                    <div class="form-section">
+                        <h5 class="section-title">
+                            <i class="fas fa-image"></i>
+                            Hình ảnh gian hàng
+                        </h5>
+                        <div class="mb-3">
+                            <label for="stallImageFile" class="form-label">Tải lên hình ảnh gian hàng mới</label>
+                            <input type="file" class="form-control" id="stallImageFile" name="stallImageFile" accept="image/*" onchange="previewImage(this)">
+                            <div class="form-text">Chọn file hình ảnh đại diện cho gian hàng (JPG, PNG, GIF). Để trống nếu không muốn thay đổi.</div>
+                        </div>
+                        <div th:if="${stall.stallImageData != null}" class="mb-3">
+                            <label class="form-label">Hình ảnh hiện tại:</label>
+                            <div class="text-center">
+                                <img th:src="@{/stall-image/{id}(id=${stall.id})}" alt="Current Image" style="max-width: 200px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            </div>
+                        </div>
+                        <div id="imagePreview" class="mb-3" style="display: none;">
+                            <label class="form-label">Cắt và xem trước hình ảnh mới:</label>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="cropper-container" style="max-height: 400px; overflow: hidden;">
+                                        <img id="previewImg" src="" alt="Preview" style="max-width: 100%;">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="cropped-preview-container">
+                                        <label class="form-label">Xem trước sau khi cắt:</label>
+                                        <div class="cropped-preview" style="width: 150px; height: 150px; border: 2px solid #dee2e6; border-radius: 8px; overflow: hidden; margin: 0 auto;">
+                                            <img id="croppedPreview" src="" alt="Cropped Preview" style="width: 100%; height: 100%; object-fit: cover;">
+                                        </div>
+                                        <div class="mt-2 text-center">
+                                            <button type="button" class="btn btn-sm btn-primary" id="cropBtn" style="display: none;">
+                                                <i class="fas fa-crop me-1"></i>Cắt ảnh
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-success" id="confirmCropBtn" style="display: none;">
+                                                <i class="fas fa-check me-1"></i>Xác nhận
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Buttons -->
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-submit">
+                            <i class="fas fa-save me-2"></i>
+                            Cập nhật gian hàng
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script>
+        // Sidebar toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                
+                // Update main content margin
+                if (sidebar.classList.contains('collapsed')) {
+                    mainContent.style.marginLeft = '0';
+                } else {
+                    mainContent.style.marginLeft = '280px';
+                }
+            });
+        });
+        
+        // Global variables for cropping
+        let cropper = null;
+        let croppedImageData = null;
+
+        // Image preview and cropping function
+        function previewImage(input) {
+            const file = input.files[0];
+            const preview = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('previewImg');
+            const cropBtn = document.getElementById('cropBtn');
+            const confirmCropBtn = document.getElementById('confirmCropBtn');
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    preview.style.display = 'block';
+                    
+                    // Initialize cropper after image loads
+                    previewImg.onload = function() {
+                        if (cropper) {
+                            cropper.destroy();
+                        }
+                        
+                        cropper = new Cropper(previewImg, {
+                            aspectRatio: 1, // Square crop
+                            viewMode: 1,
+                            dragMode: 'move',
+                            autoCropArea: 0.8,
+                            restore: false,
+                            guides: true,
+                            center: true,
+                            highlight: false,
+                            cropBoxMovable: true,
+                            cropBoxResizable: true,
+                            toggleDragModeOnDblclick: false,
+                        });
+                        
+                        cropBtn.style.display = 'inline-block';
+                        confirmCropBtn.style.display = 'none';
+                    };
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.style.display = 'none';
+                if (cropper) {
+                    cropper.destroy();
+                    cropper = null;
+                }
+                croppedImageData = null;
+            }
+        }
+
+        // Crop button functionality
+        document.getElementById('cropBtn').addEventListener('click', function() {
+            if (cropper) {
+                const canvas = cropper.getCroppedCanvas({
+                    width: 300,
+                    height: 300,
+                    imageSmoothingEnabled: true,
+                    imageSmoothingQuality: 'high',
+                });
+                
+                if (canvas) {
+                    // Show cropped preview
+                    const croppedPreview = document.getElementById('croppedPreview');
+                    croppedPreview.src = canvas.toDataURL('image/jpeg', 0.9);
+                    
+                    // Store cropped image data
+                    canvas.toBlob(function(blob) {
+                        croppedImageData = blob;
+                    }, 'image/jpeg', 0.9);
+                    
+                    // Show confirm button
+                    this.style.display = 'none';
+                    document.getElementById('confirmCropBtn').style.display = 'inline-block';
+                }
+            }
+        });
+
+        // Confirm crop button functionality
+        document.getElementById('confirmCropBtn').addEventListener('click', function() {
+            // Hide cropping interface
+            document.getElementById('imagePreview').style.display = 'none';
+            
+            // Show final cropped image
+            const finalPreview = document.createElement('div');
+            finalPreview.className = 'mb-3';
+            finalPreview.innerHTML = `
+                <label class="form-label">Hình ảnh mới đã cắt:</label>
+                <div class="text-center">
+                    <img id="finalCroppedImg" src="${document.getElementById('croppedPreview').src}" 
+                         style="max-width: 200px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                </div>
+                <div class="text-center mt-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetImageCrop()">
+                        <i class="fas fa-undo me-1"></i>Chọn lại ảnh
+                    </button>
+                </div>
+            `;
+            
+            // Insert after the file input
+            const fileInput = document.getElementById('stallImageFile');
+            fileInput.parentNode.insertBefore(finalPreview, fileInput.nextSibling);
+            
+            // Hide the cropping interface
+            document.getElementById('imagePreview').style.display = 'none';
+        });
+
+        // Reset image crop function
+        function resetImageCrop() {
+            // Clear file input
+            document.getElementById('stallImageFile').value = '';
+            
+            // Remove final preview
+            const finalPreview = document.querySelector('#finalCroppedImg').closest('.mb-3');
+            if (finalPreview) {
+                finalPreview.remove();
+            }
+            
+            // Reset variables
+            croppedImageData = null;
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            
+            // Hide image preview
+            document.getElementById('imagePreview').style.display = 'none';
+        }
+        
+        // Form validation and submission
+        document.getElementById('editStallForm').addEventListener('submit', function(e) {
+            const shortDesc = document.getElementById('shortDescription').value.trim();
+            const detailedDesc = document.getElementById('detailedDescription').value.trim();
+            
+            if (shortDesc.length === 0) {
+                e.preventDefault();
+                alert('Vui lòng nhập mô tả ngắn');
+                document.getElementById('shortDescription').focus();
+                return;
+            }
+            
+            if (detailedDesc.length === 0) {
+                e.preventDefault();
+                alert('Vui lòng nhập mô tả chi tiết');
+                document.getElementById('detailedDescription').focus();
+                return;
+            }
+            
+            if (shortDesc.length > 200) {
+                e.preventDefault();
+                alert('Mô tả ngắn không được vượt quá 200 ký tự');
+                document.getElementById('shortDescription').focus();
+                return;
+            }
+
+            // Handle cropped image data
+            if (croppedImageData) {
+                // Create a new FormData object
+                const formData = new FormData();
+                
+                // Add all form fields
+                formData.append('stallName', document.getElementById('stallName').value);
+                formData.append('status', document.getElementById('status').value);
+                formData.append('shortDescription', shortDesc);
+                formData.append('detailedDescription', detailedDesc);
+                
+                // Add cropped image as a file
+                formData.append('stallImageFile', croppedImageData, 'cropped-image.jpg');
+                
+                // Prevent default form submission
+                e.preventDefault();
+                
+                // Submit via fetch
+                fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/seller/stall-management';
+                    } else {
+                        alert('Có lỗi xảy ra khi cập nhật gian hàng. Vui lòng thử lại!');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi cập nhật gian hàng. Vui lòng thử lại!');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
