@@ -157,8 +157,10 @@
                                 </div>
                             </div>
                             <div class="col-2">
-                                <img src="/images/products/default.jpg" alt="${item.product?.name}" 
-                                     class="product-image" onerror="this.src='/images/placeholder.svg'">
+                                <img src="${(item.product?.stallId && item.product.stallId > 0) ? '/stall-image/' + item.product.stallId : '/images/placeholder.svg'}" 
+                                     alt="${item.product?.name || 'Sản phẩm'}" 
+                                     class="product-image" 
+                                     onerror="this.src='/images/placeholder.svg'">
                             </div>
                             <div class="col-4">
                                 <div class="product-name">${item.product?.name || 'Sản phẩm không xác định'}</div>

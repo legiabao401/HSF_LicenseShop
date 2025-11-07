@@ -7,6 +7,7 @@ import com.badat.study1.model.Wallet;
 import com.badat.study1.model.WalletHistory;
 import com.badat.study1.model.Product;
 import com.badat.study1.model.Review;
+import com.badat.study1.model.Order;
 import com.badat.study1.model.ApiCallLog;
 import com.badat.study1.model.UserActivityLog;
 import com.badat.study1.repository.AuditLogRepository;
@@ -569,6 +570,94 @@ public class ViewController {
         return "customer/cart";
     }
 
+    @GetMapping("/token")
+    public String tokenPage(Model model, HttpServletRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAuthenticated = authentication != null && authentication.isAuthenticated() &&
+                !authentication.getName().equals("anonymousUser");
+
+        if (!isAuthenticated) {
+            model.addAttribute("message", "bạn không có quyền truy cập chức năng này");
+            return "token";
+        }
+
+        User user = (User) authentication.getPrincipal();
+        
+        // Debug logging
+        System.out.println("=== Token Page Debug ===");
+        System.out.println("User ID: " + user.getId());
+        System.out.println("Username: " + user.getUsername());
+        
+        // Debug: Kiểm tra tất cả order items của user với COMPLETED orders
+        try {
+            var orders = orderRepository.findByBuyerIdAndStatusOrderByCreatedAtDesc(user.getId(), Order.Status.COMPLETED);
+            System.out.println("Total COMPLETED orders: " + orders.size());
+            
+            // Load order items với fetch join để tránh lazy loading
+            for (var order : orders) {
+                System.out.println("Order ID: " + order.getId() + ", Status: " + order.getStatus());
+                var orderItems = orderItemRepository.findByOrderIdWithDetails(order.getId());
+                System.out.println("  Order items count: " + orderItems.size());
+                for (var item : orderItems) {
+                    if (item.getProduct() != null) {
+                        System.out.println("    - Product ID: " + item.getProduct().getId() + 
+                                         ", Product Name: " + item.getProduct().getName() + 
+                                         ", Product Type: [" + item.getProduct().getType() + "]");
+                    } else {
+                        System.out.println("    - Product is null for order item ID: " + item.getId());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Error checking orders: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        // Debug: Kiểm tra tất cả warehouse item_types từ database
+        try {
+            var warehouseItemTypes = orderItemRepository.getAllWarehouseItemTypesFromCompletedOrders(user.getId());
+            System.out.println("All warehouse item_types from COMPLETED orders (from DB): " + warehouseItemTypes);
+        } catch (Exception e) {
+            System.out.println("Error getting warehouse item types: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        // Kiểm tra xem user đã mua sản phẩm KEY_LICENSE_BASIC hoặc KEY_LICENSE_PREMIUM chưa
+        boolean hasPurchased = orderItemRepository.hasPurchasedKeyProduct(user.getId());
+        System.out.println("Has purchased key product (from query): " + hasPurchased);
+        
+        if (!hasPurchased) {
+            model.addAttribute("message", "bạn không có quyền truy cập chức năng này");
+            return "token";
+        }
+
+        // Lấy token từ cookie
+        String token = null;
+        if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                if ("accessToken".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        // Nếu không tìm thấy trong cookie, thử lấy từ header
+        if (token == null) {
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                token = authHeader.substring(7);
+            }
+        }
+
+        if (token == null) {
+            model.addAttribute("message", "bạn không có quyền truy cập chức năng này");
+            return "token";
+        }
+
+        model.addAttribute("token", token);
+        return "token";
+    }
 
     @GetMapping("/seller/gross-sales")
     public String sellerShopPage(Model model) {

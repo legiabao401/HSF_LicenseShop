@@ -9,6 +9,7 @@ import com.badat.study1.model.User;
 import com.badat.study1.model.Wallet;
 import com.badat.study1.model.WalletHistory;
 import com.badat.study1.model.Warehouse;
+import com.badat.study1.repository.WalletHistoryRepository;
 import com.badat.study1.repository.WalletRepository;
 import com.badat.study1.repository.WarehouseRepository;
 import com.badat.study1.util.VNPayUtil;
@@ -35,6 +36,7 @@ public class PaymentService {
     private final VNPayUtil vnPayUtil;
     private final WalletRepository walletRepository;
     private final WalletHistoryService walletHistoryService;
+    private final WalletHistoryRepository walletHistoryRepository;
     private final PaymentQueueService paymentQueueService;
     private final WarehouseRepository warehouseRepository;
     private final CartService cartService;
@@ -110,6 +112,18 @@ public class PaymentService {
             Long userId = Long.parseLong(parts[1]);
             System.out.println("Processing payment for user ID: " + userId + ", amount: " + amount);
             
+            // Kiểm tra xem transaction này đã được xử lý thành công chưa (tránh spam/duplicate)
+            Optional<WalletHistory> existingTransaction = walletHistoryRepository
+                .findByReferenceIdAndTypeAndStatus(vnpTxnRef, WalletHistory.Type.DEPOSIT, WalletHistory.Status.SUCCESS);
+            
+            if (existingTransaction.isPresent()) {
+                System.out.println("Transaction already processed: " + vnpTxnRef + " - TransactionNo: " + vnpTransactionNo);
+                log.warn("Duplicate payment callback detected for orderId: {}, vnpTxnRef: {}, vnpTransactionNo: {}", 
+                    orderId, vnpTxnRef, vnpTransactionNo);
+                // Trả về true để không hiển thị lỗi cho user, nhưng không xử lý lại
+                return true;
+            }
+            
             // Find wallet by user ID
             Wallet wallet = walletRepository.findByUserId(userId)
                     .orElseThrow(() -> new RuntimeException("Wallet not found for user: " + userId));
@@ -148,6 +162,20 @@ public class PaymentService {
             e.printStackTrace();
             return false;
         }
+    }
+
+    /**
+     * Kiểm tra xem transaction đã được xử lý thành công chưa
+     * @param vnpTxnRef Transaction reference ID
+     * @return true nếu transaction đã được xử lý thành công
+     */
+    public boolean isTransactionAlreadyProcessed(String vnpTxnRef) {
+        if (vnpTxnRef == null || vnpTxnRef.isEmpty()) {
+            return false;
+        }
+        Optional<WalletHistory> existingTransaction = walletHistoryRepository
+            .findByReferenceIdAndTypeAndStatus(vnpTxnRef, WalletHistory.Type.DEPOSIT, WalletHistory.Status.SUCCESS);
+        return existingTransaction.isPresent();
     }
 
     public void handleFailedPayment(String orderId, Long amount, String vnpTxnRef, String vnpTransactionNo, String responseCode) {

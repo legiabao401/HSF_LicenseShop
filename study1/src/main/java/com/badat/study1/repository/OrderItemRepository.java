@@ -85,4 +85,32 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * Tìm OrderItem theo Warehouse ID và trạng thái
      */
     List<OrderItem> findByWarehouseIdAndStatusOrderByCreatedAtDesc(Long warehouseId, OrderItem.Status status);
+
+    /**
+     * Kiểm tra xem user đã mua sản phẩm có warehouse item_type là KEY_LICENSE_BASIC hoặc KEY_LICENSE_PREMIUM chưa
+     * Logic: Tìm order_item -> kiểm tra order status COMPLETED -> kiểm tra warehouse item_type
+     */
+    @Query(value = "SELECT CASE WHEN COUNT(oi.id) > 0 THEN 1 ELSE 0 END FROM order_item oi " +
+           "INNER JOIN `order` o ON oi.order_id = o.id " +
+           "INNER JOIN warehouse w ON oi.warehouse_id = w.id " +
+           "WHERE o.buyer_id = :buyerId " +
+           "AND o.status = 'COMPLETED' " +
+           "AND (w.item_type = 'KEY_LICENSE_PREMIUM' OR w.item_type = 'KEY_LICENSE_BASIC')", 
+           nativeQuery = true)
+    Long countPurchasedKeyProduct(@Param("buyerId") Long buyerId);
+    
+    /**
+     * Debug: Lấy tất cả warehouse item_types từ các đơn hàng COMPLETED của user
+     */
+    @Query(value = "SELECT DISTINCT w.item_type FROM order_item oi " +
+           "INNER JOIN `order` o ON oi.order_id = o.id " +
+           "INNER JOIN warehouse w ON oi.warehouse_id = w.id " +
+           "WHERE o.buyer_id = :buyerId " +
+           "AND o.status = 'COMPLETED'", nativeQuery = true)
+    List<String> getAllWarehouseItemTypesFromCompletedOrders(@Param("buyerId") Long buyerId);
+    
+    default boolean hasPurchasedKeyProduct(Long buyerId) {
+        Long count = countPurchasedKeyProduct(buyerId);
+        return count != null && count > 0;
+    }
 }
