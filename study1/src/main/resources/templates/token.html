@@ -8,20 +8,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
     <style>
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
             background-color: #f8f9fa;
+            padding: 2rem 0;
         }
         .token-container {
             background: white;
             padding: 2rem;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            max-width: 600px;
+            max-width: 1200px;
             width: 100%;
-            text-align: center;
+            margin: 0 auto;
         }
         .token-display {
             font-family: 'Courier New', monospace;
@@ -38,19 +35,199 @@
             font-size: 18px;
             font-weight: 500;
         }
+        .order-items-section {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid #dee2e6;
+        }
+        .order-item-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: #fff;
+        }
+        .order-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .order-item-id {
+            font-weight: 600;
+            color: #0d6efd;
+        }
+        .order-item-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .status-completed {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .order-item-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .detail-label {
+            font-size: 0.875rem;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+        }
+        .detail-value {
+            font-weight: 500;
+            color: #212529;
+        }
+        .premium-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
     </style>
 </head>
 <body>
-    <div class="token-container">
-        <h2 class="mb-4">
-            <i class="fa-solid fa-key me-2"></i>Token
-        </h2>
-        
-        <div th:if="${token != null}">
-            <div class="token-display" th:text="${token}"></div>
+    <div class="container">
+        <div class="token-container">
+            <h2 class="mb-4 text-center">
+                <i class="fa-solid fa-key me-2"></i>Token
+            </h2>
+            
+            <div th:if="${isPremium == true}" class="text-center">
+                <span class="premium-badge">
+                    <i class="fa-solid fa-crown me-2"></i>PREMIUM USER
+                </span>
+            </div>
+            
+            <div th:if="${token != null}" class="text-center">
+                <div class="token-display" th:text="${token}"></div>
+            </div>
+            
+            <div th:if="${message != null}" class="error-message text-center" th:text="${message}"></div>
+            
+            <!-- Hiển thị order items cho PREMIUM user -->
+            <div th:if="${isPremium == true && orderItems != null && !orderItems.isEmpty()}" class="order-items-section">
+                <h3 class="mb-4">
+                    <i class="fa-solid fa-list me-2"></i>Danh sách Order Items
+                    <span class="badge bg-primary ms-2" th:text="${#lists.size(orderItems)}"></span>
+                </h3>
+                
+                <div th:each="item : ${orderItems}" class="order-item-card">
+                    <div class="order-item-header">
+                        <div>
+                            <span class="order-item-id">Order Item ID: <span th:text="${item.id}"></span></span>
+                        </div>
+                        <span class="order-item-status" 
+                              th:classappend="${item.status.name() == 'COMPLETED'} ? 'status-completed' : 'status-pending'"
+                              th:text="${item.status.name()}"></span>
+                    </div>
+                    
+                    <div class="order-item-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Order ID</span>
+                            <span class="detail-value" th:text="${item.orderId}"></span>
+                        </div>
+                        
+                        <div class="detail-item" th:if="${item.product != null}">
+                            <span class="detail-label">Sản phẩm</span>
+                            <span class="detail-value" th:text="${item.product.name}"></span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Product ID</span>
+                            <span class="detail-value" th:text="${item.productId}"></span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Warehouse ID</span>
+                            <span class="detail-value" th:text="${item.warehouseId}"></span>
+                        </div>
+                        
+                        <div class="detail-item" th:if="${item.warehouse != null}">
+                            <span class="detail-label">Warehouse Item Type</span>
+                            <span class="detail-value" th:text="${item.warehouse.itemType}"></span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Số lượng</span>
+                            <span class="detail-value" th:text="${item.quantity}"></span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Đơn giá</span>
+                            <span class="detail-value" th:text="${#numbers.formatDecimal(item.unitPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Tổng tiền</span>
+                            <span class="detail-value text-primary fw-bold" th:text="${#numbers.formatDecimal(item.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Commission Rate</span>
+                            <span class="detail-value" th:text="${#numbers.formatDecimal(item.commissionRate, 1, 'COMMA', 1, 'POINT')} + '%'"></span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Commission Amount</span>
+                            <span class="detail-value" th:text="${#numbers.formatDecimal(item.commissionAmount, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Seller Amount</span>
+                            <span class="detail-value text-success" th:text="${#numbers.formatDecimal(item.sellerAmount, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Seller ID</span>
+                            <span class="detail-value" th:text="${item.sellerId}"></span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Shop ID</span>
+                            <span class="detail-value" th:text="${item.shopId}"></span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Stall ID</span>
+                            <span class="detail-value" th:text="${item.stallId}"></span>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <span class="detail-label">Ngày tạo</span>
+                            <span class="detail-value" th:text="${#temporals.format(item.createdAt, 'dd/MM/yyyy HH:mm:ss')}"></span>
+                        </div>
+                        
+                        <div class="detail-item" th:if="${item.notes != null && !item.notes.isEmpty()}">
+                            <span class="detail-label">Ghi chú</span>
+                            <span class="detail-value" th:text="${item.notes}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div th:if="${isPremium == true && (orderItems == null || orderItems.isEmpty())}" class="order-items-section">
+                <div class="alert alert-info text-center">
+                    <i class="fa-solid fa-info-circle me-2"></i>Bạn chưa có order items nào.
+                </div>
+            </div>
         </div>
-        
-        <div th:if="${message != null}" class="error-message" th:text="${message}"></div>
     </div>
 </body>
 </html>

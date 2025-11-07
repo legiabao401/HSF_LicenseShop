@@ -572,91 +572,137 @@ public class ViewController {
 
     @GetMapping("/token")
     public String tokenPage(Model model, HttpServletRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        boolean isAuthenticated = authentication != null && authentication.isAuthenticated() &&
-                !authentication.getName().equals("anonymousUser");
-
-        if (!isAuthenticated) {
-            model.addAttribute("message", "bạn không có quyền truy cập chức năng này");
-            return "token";
-        }
-
-        User user = (User) authentication.getPrincipal();
-        
-        // Debug logging
-        System.out.println("=== Token Page Debug ===");
-        System.out.println("User ID: " + user.getId());
-        System.out.println("Username: " + user.getUsername());
-        
-        // Debug: Kiểm tra tất cả order items của user với COMPLETED orders
         try {
-            var orders = orderRepository.findByBuyerIdAndStatusOrderByCreatedAtDesc(user.getId(), Order.Status.COMPLETED);
-            System.out.println("Total COMPLETED orders: " + orders.size());
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            boolean isAuthenticated = authentication != null && authentication.isAuthenticated() &&
+                    !authentication.getName().equals("anonymousUser");
+
+            if (!isAuthenticated) {
+                model.addAttribute("message", "bạn không có quyền truy cập chức năng này");
+                return "token";
+            }
+
+            // Kiểm tra an toàn trước khi cast
+            if (!(authentication.getPrincipal() instanceof User)) {
+                model.addAttribute("message", "bạn không có quyền truy cập chức năng này");
+                return "token";
+            }
+
+            User user = (User) authentication.getPrincipal();
             
-            // Load order items với fetch join để tránh lazy loading
-            for (var order : orders) {
-                System.out.println("Order ID: " + order.getId() + ", Status: " + order.getStatus());
-                var orderItems = orderItemRepository.findByOrderIdWithDetails(order.getId());
-                System.out.println("  Order items count: " + orderItems.size());
-                for (var item : orderItems) {
-                    if (item.getProduct() != null) {
-                        System.out.println("    - Product ID: " + item.getProduct().getId() + 
-                                         ", Product Name: " + item.getProduct().getName() + 
-                                         ", Product Type: [" + item.getProduct().getType() + "]");
-                    } else {
-                        System.out.println("    - Product is null for order item ID: " + item.getId());
+            if (user == null || user.getId() == null) {
+                model.addAttribute("message", "Không thể xác định thông tin người dùng");
+                return "token";
+            }
+            
+            // Debug logging
+            System.out.println("=== Token Page Debug ===");
+            System.out.println("User ID: " + user.getId());
+            System.out.println("Username: " + user.getUsername());
+            
+            // Debug: Kiểm tra tất cả order items của user với COMPLETED orders
+            try {
+                var orders = orderRepository.findByBuyerIdAndStatusOrderByCreatedAtDesc(user.getId(), Order.Status.COMPLETED);
+                System.out.println("Total COMPLETED orders: " + orders.size());
+                
+                // Load order items với fetch join để tránh lazy loading
+                for (var order : orders) {
+                    System.out.println("Order ID: " + order.getId() + ", Status: " + order.getStatus());
+                    var orderItems = orderItemRepository.findByOrderIdWithDetails(order.getId());
+                    System.out.println("  Order items count: " + orderItems.size());
+                    for (var item : orderItems) {
+                        if (item.getProduct() != null) {
+                            System.out.println("    - Product ID: " + item.getProduct().getId() + 
+                                             ", Product Name: " + item.getProduct().getName() + 
+                                             ", Product Type: [" + item.getProduct().getType() + "]");
+                        } else {
+                            System.out.println("    - Product is null for order item ID: " + item.getId());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("Error checking orders: " + e.getMessage());
+                e.printStackTrace();
+            }
+            
+            // Debug: Kiểm tra tất cả warehouse item_types từ database
+            try {
+                var warehouseItemTypes = orderItemRepository.getAllWarehouseItemTypesFromCompletedOrders(user.getId());
+                System.out.println("All warehouse item_types from COMPLETED orders (from DB): " + warehouseItemTypes);
+            } catch (Exception e) {
+                System.out.println("Error getting warehouse item types: " + e.getMessage());
+                e.printStackTrace();
+            }
+            
+            // Kiểm tra xem user đã mua sản phẩm KEY_LICENSE_BASIC hoặc KEY_LICENSE_PREMIUM chưa
+            boolean hasPurchased = false;
+            boolean hasPremium = false;
+            try {
+                hasPurchased = orderItemRepository.hasPurchasedKeyProduct(user.getId());
+                hasPremium = orderItemRepository.hasPurchasedPremiumProduct(user.getId());
+                System.out.println("Has purchased key product (from query): " + hasPurchased);
+                System.out.println("Has purchased PREMIUM product (from query): " + hasPremium);
+            } catch (Exception e) {
+                System.out.println("Error checking purchased key product: " + e.getMessage());
+                e.printStackTrace();
+                model.addAttribute("message", "Lỗi kiểm tra quyền truy cập: " + e.getMessage());
+                return "token";
+            }
+            
+            if (!hasPurchased) {
+                model.addAttribute("message", "bạn không có quyền truy cập chức năng này");
+                return "token";
+            }
+
+            // Nếu user có KEY_LICENSE_PREMIUM, lấy tất cả order_items của user
+            if (hasPremium) {
+                try {
+                    var allOrderItems = orderItemRepository.findAllOrderItemsByBuyerId(user.getId());
+                    System.out.println("Total order items for PREMIUM user: " + allOrderItems.size());
+                    model.addAttribute("orderItems", allOrderItems);
+                    model.addAttribute("isPremium", true);
+                } catch (Exception e) {
+                    System.out.println("Error getting order items for premium user: " + e.getMessage());
+                    e.printStackTrace();
+                    // Không fail nếu lỗi lấy order items, chỉ log
+                }
+            } else {
+                model.addAttribute("isPremium", false);
+            }
+
+            // Lấy token từ cookie
+            String token = null;
+            if (request.getCookies() != null) {
+                for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
+                    if ("accessToken".equals(cookie.getName())) {
+                        token = cookie.getValue();
+                        break;
                     }
                 }
             }
-        } catch (Exception e) {
-            System.out.println("Error checking orders: " + e.getMessage());
-            e.printStackTrace();
-        }
-        
-        // Debug: Kiểm tra tất cả warehouse item_types từ database
-        try {
-            var warehouseItemTypes = orderItemRepository.getAllWarehouseItemTypesFromCompletedOrders(user.getId());
-            System.out.println("All warehouse item_types from COMPLETED orders (from DB): " + warehouseItemTypes);
-        } catch (Exception e) {
-            System.out.println("Error getting warehouse item types: " + e.getMessage());
-            e.printStackTrace();
-        }
-        
-        // Kiểm tra xem user đã mua sản phẩm KEY_LICENSE_BASIC hoặc KEY_LICENSE_PREMIUM chưa
-        boolean hasPurchased = orderItemRepository.hasPurchasedKeyProduct(user.getId());
-        System.out.println("Has purchased key product (from query): " + hasPurchased);
-        
-        if (!hasPurchased) {
-            model.addAttribute("message", "bạn không có quyền truy cập chức năng này");
-            return "token";
-        }
 
-        // Lấy token từ cookie
-        String token = null;
-        if (request.getCookies() != null) {
-            for (jakarta.servlet.http.Cookie cookie : request.getCookies()) {
-                if ("accessToken".equals(cookie.getName())) {
-                    token = cookie.getValue();
-                    break;
+            // Nếu không tìm thấy trong cookie, thử lấy từ header
+            if (token == null) {
+                String authHeader = request.getHeader("Authorization");
+                if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                    token = authHeader.substring(7);
                 }
             }
-        }
 
-        // Nếu không tìm thấy trong cookie, thử lấy từ header
-        if (token == null) {
-            String authHeader = request.getHeader("Authorization");
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                token = authHeader.substring(7);
+            if (token == null) {
+                model.addAttribute("message", "bạn không có quyền truy cập chức năng này");
+                return "token";
             }
-        }
 
-        if (token == null) {
-            model.addAttribute("message", "bạn không có quyền truy cập chức năng này");
+            model.addAttribute("token", token);
+            return "token";
+            
+        } catch (Exception e) {
+            System.out.println("Error in tokenPage: " + e.getMessage());
+            e.printStackTrace();
+            model.addAttribute("message", "Đã xảy ra lỗi hệ thống: " + e.getMessage());
             return "token";
         }
-
-        model.addAttribute("token", token);
-        return "token";
     }
 
     @GetMapping("/seller/gross-sales")

@@ -100,6 +100,30 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     Long countPurchasedKeyProduct(@Param("buyerId") Long buyerId);
     
     /**
+     * Kiểm tra xem user đã mua sản phẩm có warehouse item_type là KEY_LICENSE_PREMIUM chưa
+     */
+    @Query(value = "SELECT CASE WHEN COUNT(oi.id) > 0 THEN 1 ELSE 0 END FROM order_item oi " +
+           "INNER JOIN `order` o ON oi.order_id = o.id " +
+           "INNER JOIN warehouse w ON oi.warehouse_id = w.id " +
+           "WHERE o.buyer_id = :buyerId " +
+           "AND o.status = 'COMPLETED' " +
+           "AND w.item_type = 'KEY_LICENSE_PREMIUM'", 
+           nativeQuery = true)
+    Long countPurchasedPremiumProduct(@Param("buyerId") Long buyerId);
+    
+    /**
+     * Lấy tất cả OrderItem của user từ các order COMPLETED với đầy đủ thông tin
+     */
+    @Query("SELECT oi FROM OrderItem oi " +
+           "LEFT JOIN FETCH oi.product p " +
+           "LEFT JOIN FETCH oi.warehouse w " +
+           "LEFT JOIN FETCH oi.order o " +
+           "WHERE o.buyerId = :buyerId " +
+           "AND o.status = 'COMPLETED' " +
+           "ORDER BY oi.createdAt DESC")
+    List<OrderItem> findAllOrderItemsByBuyerId(@Param("buyerId") Long buyerId);
+    
+    /**
      * Debug: Lấy tất cả warehouse item_types từ các đơn hàng COMPLETED của user
      */
     @Query(value = "SELECT DISTINCT w.item_type FROM order_item oi " +
@@ -111,6 +135,11 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     
     default boolean hasPurchasedKeyProduct(Long buyerId) {
         Long count = countPurchasedKeyProduct(buyerId);
+        return count != null && count > 0;
+    }
+    
+    default boolean hasPurchasedPremiumProduct(Long buyerId) {
+        Long count = countPurchasedPremiumProduct(buyerId);
         return count != null && count > 0;
     }
 }
